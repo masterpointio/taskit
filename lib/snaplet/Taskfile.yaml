@@ -56,7 +56,7 @@ tasks:
       vars:
         - SNAPLET_SOURCE_DATABASE_URL
     cmds:
-      - snaplet snapshot capture {{.SNAPSHOT_PATH}}
+      - SNAPLET_SOURCE_DATABASE_URL={{.SNAPLET_SOURCE_DATABASE_URL}} snaplet snapshot capture {{.SNAPSHOT_PATH}}
       - zip -r {{.SNAPSHOT_PATH}}.zip {{.SNAPSHOT_PATH}}
       - printf "\n\n🗑️ Captured snapshot at {{.SNAPSHOT_PATH}}"
 
