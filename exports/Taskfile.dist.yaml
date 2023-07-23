@@ -19,7 +19,7 @@ includes:
 dotenv: [.env.taskit]
 
 vars:
-  TASKIT_BRANCH: master
+  TASKIT_BRANCH: main
   TASKIT_LOCAL_PATH: ""
 
 tasks:
