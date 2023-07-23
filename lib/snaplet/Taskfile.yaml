@@ -40,12 +40,12 @@ tasks:
 
   clean:
     desc: Clean up snapshot at SNAPSHOT_PATH
+    silent: true
     requires:
       vars:
         - SNAPSHOT_PATH
     cmds:
       - rm -rf {{.SNAPSHOT_PATH}}
-      - mkdir -p {{.SNAPSHOT_PATH}}
       - printf "\n\n🗑️ Cleaned up snapshot at {{.SNAPSHOT_PATH}}"
 
   capture:
