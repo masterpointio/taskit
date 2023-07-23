@@ -1,0 +1,8 @@
+version: "3"
+
+includes:
+  aqua: lib/aqua/Taskfile.yaml
+
+tasks:
+  default:
+    cmds: []
