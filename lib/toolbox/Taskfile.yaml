@@ -1,0 +1,59 @@
+# See more information in docs/toolbox.md
+version: "3"
+vars:
+  IMAGE_NAME: toolbox
+  LATEST_IMAGE_TAG: "{{.IMAGE_NAME}}:latest"
+  VERSION_IMAGE_TAG: "{{.IMAGE_NAME}}:{{.VERSION}}"
+  VERSION:
+    sh: git rev-parse --short HEAD
+  REGISTRY_URL_FULL: "{{.REGISTRY_URL}}/{{.LATEST_IMAGE_TAG}}"
+  CONTAINERFILE_PATH: ./Dockerfile
+  AWS_REGION: '{{.AWS_REGION | default "us-east-1"}}'
+
+tasks:
+  all:
+    desc: Build, install, and run the toolbox image
+    cmds:
+      - task: build
+      - task: install
+      - task: run
+
+  build:
+    desc: Build and tag our toolbox image
+    requires:
+      vars:
+        - IMAGE_NAME
+        - CONTAINERFILE_PATH
+    cmds:
+      - docker build --tag {{.LASTEST_IMAGE_TAG}} --tag {{.VERSION_IMAGE_TAG}} {{.CONTAINERFILE_PATH}}
+      - echo "Done building and tagging toolbox 💯 Tagged as {{.VERSION_IMAGE_TAG}} + {{.LATEST_IMAGE_TAG}}"
+
+  install:
+    desc: Install wrapper script from geodesic container
+    requires:
+      vars:
+        - IMAGE_NAME
+    cmds:
+      - docker run --rm {{.LATEST_IMAGE_TAG}} init | bash -s {{.IMAGE_NAME}} || (echo 'Try "sudo make install"'; exit 1)
+
+  pull:
+    desc: Pull our toolbox image from registry
+    requires:
+      vars:
+        - REGISTRY_URL_BASE
+        - REGISTRY_URL_FULL
+    cmds:
+      - |
+        aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin {{.REGISTRY_URL_BASE}}
+        docker pull {{.REGISTRY_URL_FULL}}
+
+  run:
+    desc: Run our toolbox image while also mounting your $HOME folder to `/localhost` in the container
+    cmds:
+      - /usr/local/bin/{{.IMAGE_NAME}}
+# TODO
+# ## Publish the toolbox image to our ECR repo
+# publish: build
+# 	@export VERSION=$(shell git rev-parse --short HEAD); \
+# 		make docker/image/push TARGET_VERSION=$$VERSION
+# 		make docker/image/push TARGET_VERSION=latest;

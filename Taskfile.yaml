@@ -2,7 +2,8 @@ version: "3"
 
 includes:
   aqua: lib/aqua/Taskfile.yaml
+  aws: lib/aws/Taskfile.yaml
+  snaplet: lib/snaplet/Taskfile.yaml
+  toolbox: lib/toolbox/Taskfile.yaml
 
-tasks:
-  default:
-    cmds: []
+tasks: {}

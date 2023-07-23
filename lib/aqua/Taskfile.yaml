@@ -3,13 +3,24 @@ version: "3"
 tasks:
   install:
     desc: Installs the Aqua CLI using the universal installer script, sets in PATH, and upgrades.
+    summary: |
+      Installs the Aqua CLI using the universal installer script, sets in PATH, and upgrades.
+
+      NOTE: The instructions for downloading the aqua-installer have a standard checksum verification step.
+      This requires knowing the checksum for all versions, which we do not so we have decided to accept the risk and skip that step.
+
+      Provide a version to install with the AQUA_INSTALLER_VERSION variable.
+      example:
+      > task aqua:install AQUA_INSTALLER_VERSION=v2.1.1
+
     silent: true
+    vars:
+      AQUA_INSTALLER_VERSION: v2.1.2
     cmds:
       - defer: rm ./aqua-installer
       - |
         touch ./aqua-installer
-        curl -sSfL -O https://raw.githubusercontent.com/aquaproj/aqua-installer/v2.1.1/aqua-installer
-        echo "c2af02bdd15da6794f9c98db40332c804224930212f553a805425441f8331665  aqua-installer" | sha256sum -c
+        curl -sSfL -O https://raw.githubusercontent.com/aquaproj/aqua-installer/{{.AQUA_INSTALLER_VERSION}}/aqua-installer
         chmod +x aqua-installer
         ./aqua-installer
 

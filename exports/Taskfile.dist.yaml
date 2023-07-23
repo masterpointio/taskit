@@ -1,0 +1,49 @@
+# This is the Taskfile responsible for managing Taskit in any consuming repository
+# More information is available at https://github.com/masterpointio/taskit
+# This file is typically copied into the repo as-is and any required edits should be made both here and in the taskit repo (if applicable)
+# If any project specific changes are required, they should be made in a separate taskfiles/<module name>/Taskfile.yaml and then imported here.
+
+version: "3"
+
+includes:
+  taskit:
+    taskfile: .taskit/Taskfile.yaml
+    optional: true # Optional only until we have init'd taskit
+    aliases: [t]
+  local:
+    taskfile: taskfiles/Taskfile.yaml
+    optional: true # Optional as we may not have any local taskfiles
+    aliases: [l]
+
+# Load our project specific variables from .env.taskit
+dotenv: [.env.taskit]
+
+vars:
+  TASKIT_BRANCH: master
+  TASKIT_LOCAL_PATH: ""
+
+tasks:
+  default:
+    desc: Initializes the Taskfile setup for this project by downloading the remote taskit Taskfile Kit.
+    deps: [clean]
+    silent: true
+    aliases: [init]
+    cmds:
+      - |
+        if [[ -z "{{.TASKIT_LOCAL_PATH}}" ]]; then
+          echo "Copying taskit from local path..."
+          rsync -rq --exclude=.git --exclude= {{.TASKIT_LOCAL_PATH}} .taskit
+        else
+          echo "Downloading taskit from remote repo..."
+          git clone -b {{.TASKIT_BRANCH}} git@github.com:masterpointio/taskit.git .taskit
+        fi
+
+  clean:
+    desc: Cleans up the project's Task setup
+    silent: true
+    cmds:
+      - |
+        if [ -d .taskit ]; then
+          rm -rf .taskit/
+        fi
+        mkdir -p .taskit

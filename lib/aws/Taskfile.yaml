@@ -1,0 +1,25 @@
+version: "3"
+
+tasks:
+  validate-access:
+    desc: Validate access to AWS for the given command
+    # silent: true
+    internal: true
+    set: [e]
+    vars:
+      AWS_REGION: us-east-1
+      AWS_COMMAND: '{{.AWS_COMMAND | default "sts get-caller-identity"}}'
+    requires:
+      vars:
+        - MESSAGE
+    cmds:
+      - |
+
+        # Check the exit status of the command
+        if aws {{.AWS_COMMAND}} >/dev/null 2>&1; then
+            # This means the command succeeded, so do nothing, all is good.
+            exit 0;
+        else
+            printf "\n\n🚨 AWS access validation failed. Please check your AWS credentials and try again.\n\nMessage:\n{{.MESSAGE}}\n"
+            exit 1;
+        fi

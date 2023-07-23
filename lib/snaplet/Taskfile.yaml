@@ -1,0 +1,106 @@
+version: "3"
+
+includes:
+  aws:
+    taskfile: ../aws/Taskfile.yaml
+    aliases: [aws]
+    internal: true
+
+vars:
+  SNAPSHOT_NAME:
+    sh: date +%Y-%m-%d # YYYY-MM-DD
+  SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_NAME}}"
+
+tasks:
+  validate-snaplet-bucket-access:
+    desc: Validate access to the given S3 Bucket
+    silent: true
+    internal: true
+    requires:
+      vars:
+        - SNAPLET_BUCKET
+    cmds:
+      - task: aws:validate-access
+        vars:
+          AWS_COMMAND: s3 ls {{.SNAPLET_BUCKET}}
+          MESSAGE: |
+            AWS CLI access is required to invoke this task.
+            Please ensure you're using the correct AWS credentials that have access to the {{.SNAPLET_BUCKET}} bucket.
+
+  list:
+    desc: List all available snapshots in the given S3 Bucket
+    silent: true
+    deps: [validate-snaplet-bucket-access]
+    requires:
+      vars:
+        - SNAPLET_BUCKET
+    cmds:
+      - printf "\n\n📸 Snapshots available:\n"
+      - aws s3 ls {{.SNAPLET_BUCKET}} | sed 's/PRE//g'
+
+  clean:
+    desc: Clean up snapshot at SNAPSHOT_PATH
+    requires:
+      vars:
+        - SNAPSHOT_PATH
+    cmds:
+      - rm -rf {{.SNAPSHOT_PATH}}
+      - mkdir -p {{.SNAPSHOT_PATH}}
+      - printf "\n\n🗑️ Cleaned up snapshot at {{.SNAPSHOT_PATH}}"
+
+  capture:
+    desc: Helper for running snaplet snapshot capture.
+    silent: true
+    deps: [clean]
+    requires:
+      vars:
+        - SNAPLET_SOURCE_DATABASE_URL
+    cmds:
+      - snaplet snapshot capture {{.SNAPSHOT_PATH}}
+      - zip -r {{.SNAPSHOT_PATH}}.zip {{.SNAPSHOT_PATH}}
+      - printf "\n\n🗑️ Captured snapshot at {{.SNAPSHOT_PATH}}"
+
+  upload:
+    desc: Helper for uploading a snaplet snapshot to a given S3 Bucket
+    deps: [validate-snaplet-bucket-access]
+    vars:
+      UPLOAD_AS_LATEST: true
+    requires:
+      vars:
+        - SNAPLET_BUCKET
+    cmds:
+      - aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_NAME}}
+      - |
+        if [ "{{.UPLOAD_AS_LATEST}}" -eq "true" ]; then
+          # We first remove everything so there are no artifacts leftover from a previous upload that we're not overwriting.
+          aws s3 rm --recursive {{.SNAPLET_BUCKET}}/latest
+          aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/latest
+        fi
+
+  download:
+    desc: Downloads a snaplet snapshot from a given S3 Bucket. Pass in SNAPSHOT_NAME to download a specific snapshot from the bucket.
+    silent: true
+    deps: [clean, validate-snaplet-bucket-access]
+    vars:
+      SNAPSHOT_NAME: latest
+      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_NAME}}"
+    requires:
+      vars:
+        - SNAPLET_BUCKET
+    cmds:
+      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_NAME}} {{.SNAPSHOT_PATH}}
+      - printf "\n\n⬇ Snapshot downloaded to {{.SNAPSHOT_PATH}}"
+
+  restore:
+    desc: Restores the given SNAPSHOT_NAME to the SNAPLET_TARGET_DATABASE_URL database.
+    prompt: This will wipe all of the data in the given SNAPLET_TARGET_DATABASE_URL. Are you sure?
+    silent: true
+    vars:
+      SNAPSHOT_NAME: latest
+      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_NAME}}"
+    requires:
+      vars:
+        - SNAPLET_TARGET_DATABASE_URL
+    cmds:
+      - snaplet snapshot restore {{.SNAPSHOT_PATH}}
+      - printf "\n\n💯 Restored snapshot from {{.SNAPSHOT_PATH}}\n"
