@@ -3,7 +3,7 @@ version: "3"
 tasks:
   validate-access:
     desc: Validate access to AWS for the given command
-    # silent: true
+    silent: true
     internal: true
     set: [e]
     vars:
@@ -14,7 +14,6 @@ tasks:
         - MESSAGE
     cmds:
       - |
-
         # Check the exit status of the command
         if aws {{.AWS_COMMAND}} >/dev/null 2>&1; then
             # This means the command succeeded, so do nothing, all is good.

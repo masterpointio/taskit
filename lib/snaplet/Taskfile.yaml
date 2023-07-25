@@ -3,7 +3,6 @@ version: "3"
 includes:
   aws:
     taskfile: ../aws/Taskfile.yaml
-    aliases: [aws]
     internal: true
 
 vars:
@@ -30,7 +29,8 @@ tasks:
   list:
     desc: List all available snapshots in the given S3 Bucket
     silent: true
-    deps: [validate-snaplet-bucket-access]
+    deps:
+      - validate-snaplet-bucket-access
     requires:
       vars:
         - SNAPLET_BUCKET
@@ -51,7 +51,8 @@ tasks:
   capture:
     desc: Helper for running snaplet snapshot capture.
     silent: true
-    deps: [clean]
+    deps:
+      - clean
     requires:
       vars:
         - SNAPLET_SOURCE_DATABASE_URL
@@ -62,7 +63,8 @@ tasks:
 
   upload:
     desc: Helper for uploading a snaplet snapshot to a given S3 Bucket
-    deps: [validate-snaplet-bucket-access]
+    deps:
+      - validate-snaplet-bucket-access
     vars:
       UPLOAD_AS_LATEST: true
     requires:
@@ -80,7 +82,9 @@ tasks:
   download:
     desc: Downloads a snaplet snapshot from a given S3 Bucket. Pass in SNAPSHOT_NAME to download a specific snapshot from the bucket.
     silent: true
-    deps: [clean, validate-snaplet-bucket-access]
+    deps:
+      - clean
+      - validate-snaplet-bucket-access
     vars:
       SNAPSHOT_NAME: latest
       SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_NAME}}"

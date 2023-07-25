@@ -1,6 +1,6 @@
-# This is the Taskfile responsible for managing Taskit in any consuming repository
+# This is the Taskfile responsible for managing taskit in any consuming repository
 # More information is available at https://github.com/masterpointio/taskit
-# This file is typically copied into the repo as-is and any required edits should be made both here and in the taskit repo (if applicable)
+# This file is typically cloned into the repo as-is and any required edits should be made both here and in the taskit repo (if applicable)
 # If any project specific changes are required, they should be made in a separate taskfiles/<module name>/Taskfile.yaml and then imported here.
 
 version: "3"
@@ -24,12 +24,35 @@ vars:
 
 tasks:
   default:
-    desc: Initializes the Taskfile setup for this project by downloading the remote taskit Taskfile Kit.
+    desc: Initializes taskit
+    summary: |
+      This sets up taskit for this project by cloning the taskit project to .taskit/.
+      It also adds the taskit gitignore entries to the project's .gitignore file.
+      You can find more information at https://github.com/masterpointio/taskit
+
+      To set the branch that is cloned, set the `TASKIT_BRANCH`.
+
+      To work on taskit modules locally, set the `TASKIT_LOCAL_PATH` to the path of the local taskit repo.
+      This sets taskit to copy the files from the local repo instead of cloning the remote repo, whichs allows you to work on taskit locally.
     deps: [clean]
     silent: true
     aliases: [init]
     cmds:
+      - printf "🚀 Initializing taskit...\n\n"
       - |
+        if [[ -f .gitignore ]]; then
+          echo "Adding taskit gitignore entries to existing .gitignore..."
+        else
+          echo "Creating .gitignore..."
+          touch .gitignore
+        fi
+
+        if ! grep -q ".taskit" .gitignore; then
+          echo -e "\n## Taskit files\n.taskit/\n.task/\n.snaplet/snapshots/" >> .gitignore
+        fi
+
+      - |
+        echo -e "\n"
         if [[ -z "{{.TASKIT_LOCAL_PATH}}" ]]; then
           echo "Copying taskit from local path..."
           rsync -rq --exclude=.git --exclude= {{.TASKIT_LOCAL_PATH}} .taskit
@@ -38,12 +61,11 @@ tasks:
           git clone -b {{.TASKIT_BRANCH}} git@github.com:masterpointio/taskit.git .taskit
         fi
 
+        echo -e "\n\n⚡ Taskit successfully initialized! ⚡\n"
+
   clean:
     desc: Cleans up the project's Task setup
     silent: true
     cmds:
-      - |
-        if [ -d .taskit ]; then
-          rm -rf .taskit/
-        fi
-        mkdir -p .taskit
+      - rm -rf .taskit/
+      - mkdir -p .taskit
