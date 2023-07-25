@@ -53,7 +53,7 @@ tasks:
 
       - |
         echo -e "\n"
-        if [[ -z "{{.TASKIT_LOCAL_PATH}}" ]]; then
+        if [[ -n "{{.TASKIT_LOCAL_PATH}}" ]]; then
           echo "Copying taskit from local path..."
           rsync -rq --exclude=.git --exclude= {{.TASKIT_LOCAL_PATH}} .taskit
         else
