@@ -58,7 +58,7 @@ tasks:
           rsync -rq --exclude=.git --exclude= {{.TASKIT_LOCAL_PATH}} .taskit
         else
           echo "Downloading taskit from remote repo..."
-          git clone -b {{.TASKIT_BRANCH}} git@github.com:masterpointio/taskit.git .taskit
+          git clone -b {{.TASKIT_BRANCH}} https://github.com/masterpointio/taskit.git .taskit
         fi
 
         echo -e "\n\n⚡ Taskit successfully initialized! ⚡\n"
