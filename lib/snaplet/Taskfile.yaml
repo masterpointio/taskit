@@ -9,6 +9,7 @@ vars:
   SNAPSHOT_NAME:
     sh: date +%Y-%m-%d # YYYY-MM-DD
   SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_NAME}}"
+  SNAPSHOT_ENV: dev
 
 tasks:
   validate-snaplet-bucket-access:
@@ -70,13 +71,14 @@ tasks:
     requires:
       vars:
         - SNAPLET_BUCKET
+        - SNAPSHOT_ENV
     cmds:
-      - aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_NAME}}
+      - aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}}
       - |
         if [ "{{.UPLOAD_AS_LATEST}}" -eq "true" ]; then
           # We first remove everything so there are no artifacts leftover from a previous upload that we're not overwriting.
-          aws s3 rm --recursive {{.SNAPLET_BUCKET}}/latest
-          aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/latest
+          aws s3 rm --recursive {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/latest
+          aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/latest
         fi
 
   download:
@@ -91,8 +93,9 @@ tasks:
     requires:
       vars:
         - SNAPLET_BUCKET
+        - SNAPSHOT_ENV
     cmds:
-      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_NAME}} {{.SNAPSHOT_PATH}}
+      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}} {{.SNAPSHOT_PATH}}
       - printf "\n\n⬇ Snapshot downloaded to {{.SNAPSHOT_PATH}}"
 
   restore:
