@@ -15,8 +15,10 @@ includes:
     optional: true # Optional as we may not have any local taskfiles
     aliases: [l]
 
-# Load our project specific variables from .env.taskit
-dotenv: [.env.taskit]
+# Load our project specific variables from .env.taskit + .env.taskit-secrets
+dotenv:
+  - .env.taskit
+  - .env.taskit-secrets
 
 vars:
   TASKIT_BRANCH: main
@@ -48,7 +50,7 @@ tasks:
         fi
 
         if ! grep -q ".taskit" .gitignore; then
-          echo -e "\n## Taskit files\n.taskit/\n.task/\n.snaplet/snapshots/" >> .gitignore
+          echo -e "\n## Taskit files\n.taskit/\n.task/\n.snaplet/snapshots/\n.env.taskit-secrets\n" >> .gitignore
         fi
 
       - |
@@ -58,7 +60,7 @@ tasks:
           rsync -rq --exclude=.git --exclude= {{.TASKIT_LOCAL_PATH}} .taskit
         else
           echo "Downloading taskit from remote repo..."
-          git clone -b {{.TASKIT_BRANCH}} https://github.com/masterpointio/taskit.git .taskit
+          git clone -b {{.TASKIT_BRANCH}} https://github.com/masterpointio/taskit.git .taskit/
         fi
 
         echo -e "\n\n⚡ Taskit successfully initialized! ⚡\n"

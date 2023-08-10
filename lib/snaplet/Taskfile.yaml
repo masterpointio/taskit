@@ -8,10 +8,23 @@ includes:
 vars:
   SNAPSHOT_NAME:
     sh: date +%Y-%m-%d # YYYY-MM-DD
-  SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_NAME}}"
-  SNAPSHOT_ENV: dev
+  SNAPSHOT_ENV: '{{.SNAPSHOT_ENV | default "dev"}}'
+  SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}}
 
 tasks:
+  validate-copycat-secret:
+    desc: Validates that the `COPYCAT_SECRET` env var has been passed.
+    silent: true
+    internal: true
+    cmds:
+      - |
+        if [[ -z "{{.COPYCAT_SECRET}}" ]]; then
+          printf "\n\n❌ COPYCAT_SECRET is required to invoke this snaplet task.\n"
+          printf "Please ensure you're providing that value through .env.taskit-secrets locally.\n"
+          printf "This value is typically stored in a global SOPS file for developer use.\n"
+          exit 1
+        fi
+
   validate-snaplet-bucket-access:
     desc: Validate access to the given S3 Bucket
     silent: true
@@ -54,20 +67,21 @@ tasks:
     silent: true
     deps:
       - clean
+      - validate-copycat-secret
     requires:
       vars:
         - SNAPLET_SOURCE_DATABASE_URL
     cmds:
       - SNAPLET_SOURCE_DATABASE_URL={{.SNAPLET_SOURCE_DATABASE_URL}} snaplet snapshot capture {{.SNAPSHOT_PATH}}
       - zip -r {{.SNAPSHOT_PATH}}.zip {{.SNAPSHOT_PATH}}
-      - printf "\n\n🗑️ Captured snapshot at {{.SNAPSHOT_PATH}}"
+      - printf "\n\n✅ Captured snapshot at {{.SNAPSHOT_PATH}}\n"
 
   upload:
     desc: Helper for uploading a snaplet snapshot to a given S3 Bucket
     deps:
       - validate-snaplet-bucket-access
     vars:
-      UPLOAD_AS_LATEST: true
+      UPLOAD_AS_LATEST: '{{.UPLOAD_AS_LATEST | default "true"}}'
     requires:
       vars:
         - SNAPLET_BUCKET
@@ -88,8 +102,8 @@ tasks:
       - clean
       - validate-snaplet-bucket-access
     vars:
-      SNAPSHOT_NAME: latest
-      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_NAME}}"
+      SNAPSHOT_NAME: '{{.SNAPSHOT_NAME | default "latest"}}'
+      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}}"
     requires:
       vars:
         - SNAPLET_BUCKET
@@ -103,11 +117,12 @@ tasks:
     prompt: This will wipe all of the data in the given SNAPLET_TARGET_DATABASE_URL. Are you sure?
     silent: true
     vars:
-      SNAPSHOT_NAME: latest
-      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_NAME}}"
+      SNAPSHOT_NAME: '{{.SNAPSHOT_NAME | default "latest"}}'
+      SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}}
     requires:
       vars:
         - SNAPLET_TARGET_DATABASE_URL
     cmds:
+      - printf "\n\n👋 Restoring snapshot from {{.SNAPSHOT_PATH}}\n"
       - snaplet snapshot restore {{.SNAPSHOT_PATH}}
       - printf "\n\n💯 Restored snapshot from {{.SNAPSHOT_PATH}}\n"
