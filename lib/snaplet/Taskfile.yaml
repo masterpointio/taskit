@@ -96,29 +96,36 @@ tasks:
         fi
 
   download:
-    desc: Downloads a snaplet snapshot from a given S3 Bucket. Pass in SNAPSHOT_NAME to download a specific snapshot from the bucket.
+    desc: Downloads a snaplet snapshot to the local machine.
+    summary: |
+      Downloads a given snaplet snapshot from a given S3 Bucket.
+      Pass in RESTORE_SNAPSHOT to download a specific snapshot from the bucket.
+      Pass in SNAPSHOT_ENV to download the snapshot for a specific environment.
+      Pass in SNAPLET_BUCKET to download from a specific bucket.
     silent: true
     deps:
-      - clean
-      - validate-snaplet-bucket-access
+      - task: clean
+        vars:
+          SNAPSHOT_PATH: "{{.SNAPSHOT_PATH}}"
+      - task: validate-snaplet-bucket-access
     vars:
-      SNAPSHOT_NAME: '{{.SNAPSHOT_NAME | default "latest"}}'
-      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}}"
+      RESTORE_SNAPSHOT: '{{.RESTORE_SNAPSHOT | default "latest"}}'
+      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}"
     requires:
       vars:
         - SNAPLET_BUCKET
         - SNAPSHOT_ENV
     cmds:
-      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}} {{.SNAPSHOT_PATH}}
-      - printf "\n\n⬇ Snapshot downloaded to {{.SNAPSHOT_PATH}}"
+      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}} {{.SNAPSHOT_PATH}}
+      - printf "\n\n⬇ Snapshot downloaded to {{.SNAPSHOT_PATH}}\n\n"
 
   restore:
-    desc: Restores the given SNAPSHOT_NAME to the SNAPLET_TARGET_DATABASE_URL database.
+    desc: Restores the given RESTORE_SNAPSHOT to the SNAPLET_TARGET_DATABASE_URL database.
     prompt: This will wipe all of the data in the given SNAPLET_TARGET_DATABASE_URL. Are you sure?
     silent: true
     vars:
-      SNAPSHOT_NAME: '{{.SNAPSHOT_NAME | default "latest"}}'
-      SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}}
+      RESTORE_SNAPSHOT: '{{.RESTORE_SNAPSHOT | default "latest"}}'
+      SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}
     requires:
       vars:
         - SNAPLET_TARGET_DATABASE_URL

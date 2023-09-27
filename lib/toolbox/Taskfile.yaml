@@ -7,7 +7,7 @@ vars:
   VERSION:
     sh: git rev-parse --short HEAD
   REGISTRY_URL_FULL: "{{.REGISTRY_URL}}/{{.LATEST_IMAGE_TAG}}"
-  CONTAINERFILE_PATH: ./Dockerfile
+  CONTAINERFILE_PATH: '{{.CONTAINERFILE_PATH | default "./Dockerfile"}}'
   AWS_REGION: '{{.AWS_REGION | default "us-east-1"}}'
 
 tasks:
@@ -25,7 +25,7 @@ tasks:
         - IMAGE_NAME
         - CONTAINERFILE_PATH
     cmds:
-      - docker build --tag {{.LASTEST_IMAGE_TAG}} --tag {{.VERSION_IMAGE_TAG}} {{.CONTAINERFILE_PATH}}
+      - "docker build --tag {{.LATEST_IMAGE_TAG}} --tag {{.VERSION_IMAGE_TAG}} -f {{.CONTAINERFILE_PATH}} ."
       - echo "Done building and tagging toolbox 💯 Tagged as {{.VERSION_IMAGE_TAG}} + {{.LATEST_IMAGE_TAG}}"
 
   install:
@@ -50,7 +50,7 @@ tasks:
   run:
     desc: Run our toolbox image while also mounting your $HOME folder to `/localhost` in the container
     cmds:
-      - /usr/local/bin/{{.IMAGE_NAME}}
+      - "{{.IMAGE_NAME}}"
 # TODO
 # ## Publish the toolbox image to our ECR repo
 # publish: build
