@@ -22,30 +22,12 @@ tasks:
     cmds:
       - aws ecr get-login-password --region {{.AWS_REGION}} | docker login --username AWS --password-stdin {{.REGISTRY_URL_BASE}}
 
-  install:
-    desc: Install wrapper script from geodesic container
-    internal: true
-    requires:
-      vars:
-        - TOOLBOX_NAME
-    cmds:
-      - docker run --rm {{.REGISTRY_LATEST_URL}} init | bash -s {{.TOOLBOX_NAME}}
-
-  run:build:
-    desc: Build, install, and run the toolbox image
-    cmds:
-      - task: build
-      - task: run
-
-  run:pull:
-    desc: Pull, install, and run the toolbox image
-    cmds:
-      - task: pull
-      - task: run
-
   clean:
     desc: Cleans all toolbox images off of the local machine
     prompt: Are you sure you want to clean all {{.TOOLBOX_NAME}} toolbox images off of the local machine?
+    requires:
+      vars:
+        - TOOLBOX_NAME
     cmds:
       - docker rmi $(docker images --format '{{ "{{" }}.Repository{{ "}}" }}:{{ "{{" }}.Tag{{ "}}" }}' | grep '{{.TOOLBOX_NAME}}')
 
@@ -55,6 +37,7 @@ tasks:
       vars:
         - TOOLBOX_NAME
         - CONTAINERFILE_PATH
+        - REGISTRY_URL_BASE
     cmds:
       - |
         docker build --tag {{.LATEST_IMAGE_TAG}} \
@@ -63,13 +46,6 @@ tasks:
                      --tag {{.REGISTRY_VERSION_URL}} \
                      -f {{.CONTAINERFILE_PATH}} .
       - echo "Done building and tagging toolbox 💯 Tagged as {{.VERSION_IMAGE_TAG}} + {{.LATEST_IMAGE_TAG}}"
-
-  run:
-    desc: Run our toolbox image while also mounting your $HOME folder to `/localhost` in the container
-    deps:
-      - install
-    cmds:
-      - "{{.TOOLBOX_NAME}}"
 
   pull:
     desc: Pull our toolbox image from registry
@@ -94,3 +70,38 @@ tasks:
     cmds:
       - docker push {{.REGISTRY_LATEST_URL}}
       - docker push {{.REGISTRY_VERSION_URL}}
+
+  install:
+    desc: Execute the toolbox wrapper script from geodesic, installing a toolbox start script onto the local host
+    summary: |
+      This executes the `init | bash` geodesic command, which pipes a bash script to the host machine which installs a
+      helper script onto the host. The helper script is used to easily start / attach the toolbox image as a container
+      and properly pass all of the relevant flags to docker (i.e. exposes a port, mounts $HOME to /localhost, etc.)
+    requires:
+      vars:
+        - TOOLBOX_NAME
+        - REGISTRY_LATEST_URL
+    cmds:
+      - docker run --rm {{.REGISTRY_LATEST_URL}} init | bash -s {{.TOOLBOX_NAME}}
+
+  run:
+    desc: Run our toolbox image from the helper script installed on the host.
+    deps:
+      - install
+    requires:
+      vars:
+        - TOOLBOX_NAME
+    cmds:
+      - "{{.TOOLBOX_NAME}}"
+
+  run:build:
+    desc: Build, install, and run the toolbox image
+    cmds:
+      - task: build
+      - task: run
+
+  run:pull:
+    desc: Pull, install, and run the toolbox image
+    cmds:
+      - task: pull
+      - task: run
