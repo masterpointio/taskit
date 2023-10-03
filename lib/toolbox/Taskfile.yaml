@@ -1,59 +1,109 @@
 # See more information in docs/toolbox.md
 version: "3"
 vars:
-  IMAGE_NAME: toolbox
-  LATEST_IMAGE_TAG: "{{.IMAGE_NAME}}:latest"
-  VERSION_IMAGE_TAG: "{{.IMAGE_NAME}}:{{.VERSION}}"
   VERSION:
     sh: git rev-parse --short HEAD
-  REGISTRY_URL_FULL: "{{.REGISTRY_URL}}/{{.LATEST_IMAGE_TAG}}"
-  CONTAINERFILE_PATH: '{{.CONTAINERFILE_PATH | default "./Dockerfile"}}'
+  TOOLBOX_NAME: '{{.TOOLBOX_NAME | default "toolbox"}}'
+  LATEST_IMAGE_TAG: "{{.TOOLBOX_NAME}}:latest"
+  VERSION_IMAGE_TAG: "{{.TOOLBOX_NAME}}:{{.VERSION}}"
+  REGISTRY_LATEST_URL: "{{.REGISTRY_URL_BASE}}/{{.LATEST_IMAGE_TAG}}"
+  REGISTRY_VERSION_URL: "{{.REGISTRY_URL_BASE}}/{{.VERSION_IMAGE_TAG}}"
+  CONTAINERFILE_PATH: '{{.CONTAINERFILE_PATH | default "./Containerfile"}}'
   AWS_REGION: '{{.AWS_REGION | default "us-east-1"}}'
 
 tasks:
-  all:
-    desc: Build, install, and run the toolbox image
+  auth:
+    desc: Authenticate to AWS ECR
+    internal: true
+    requires:
+      vars:
+        - AWS_REGION
+        - REGISTRY_URL_BASE
     cmds:
-      - task: build
-      - task: install
-      - task: run
+      - aws ecr get-login-password --region {{.AWS_REGION}} | docker login --username AWS --password-stdin {{.REGISTRY_URL_BASE}}
+
+  clean:
+    desc: Cleans all toolbox images off of the local machine
+    prompt: Are you sure you want to clean all {{.TOOLBOX_NAME}} toolbox images off of the local machine?
+    requires:
+      vars:
+        - TOOLBOX_NAME
+    cmds:
+      - docker rmi $(docker images --format '{{ "{{" }}.Repository{{ "}}" }}:{{ "{{" }}.Tag{{ "}}" }}' | grep '{{.TOOLBOX_NAME}}')
 
   build:
     desc: Build and tag our toolbox image
     requires:
       vars:
-        - IMAGE_NAME
+        - TOOLBOX_NAME
         - CONTAINERFILE_PATH
+        - REGISTRY_URL_BASE
     cmds:
-      - "docker build --tag {{.LATEST_IMAGE_TAG}} --tag {{.VERSION_IMAGE_TAG}} -f {{.CONTAINERFILE_PATH}} ."
+      - |
+        docker build --tag {{.LATEST_IMAGE_TAG}} \
+                     --tag {{.VERSION_IMAGE_TAG}} \
+                     --tag {{.REGISTRY_LATEST_URL}} \
+                     --tag {{.REGISTRY_VERSION_URL}} \
+                     -f {{.CONTAINERFILE_PATH}} .
       - echo "Done building and tagging toolbox 💯 Tagged as {{.VERSION_IMAGE_TAG}} + {{.LATEST_IMAGE_TAG}}"
-
-  install:
-    desc: Install wrapper script from geodesic container
-    requires:
-      vars:
-        - IMAGE_NAME
-    cmds:
-      - docker run --rm {{.LATEST_IMAGE_TAG}} init | bash -s {{.IMAGE_NAME}} || (echo 'Try "sudo make install"'; exit 1)
 
   pull:
     desc: Pull our toolbox image from registry
+    deps:
+      - auth
     requires:
       vars:
         - REGISTRY_URL_BASE
-        - REGISTRY_URL_FULL
+        - REGISTRY_LATEST_URL
     cmds:
-      - |
-        aws ecr get-login-password --region $(AWS_REGION) | docker login --username AWS --password-stdin {{.REGISTRY_URL_BASE}}
-        docker pull {{.REGISTRY_URL_FULL}}
+      - docker pull {{.REGISTRY_LATEST_URL}}
+      - docker tag {{.REGISTRY_LATEST_URL}} {{.LATEST_IMAGE_TAG}}
+
+  publish:
+    desc: Publish our toolbox image to the registry
+    deps:
+      - auth
+    requires:
+      vars:
+        - REGISTRY_URL_BASE
+        - REGISTRY_LATEST_URL
+    cmds:
+      - docker push {{.REGISTRY_LATEST_URL}}
+      - docker push {{.REGISTRY_VERSION_URL}}
+
+  install:
+    desc: Execute the toolbox wrapper script from geodesic, installing a toolbox start script onto the local host
+    summary: |
+      This executes the `init | bash` geodesic command, which pipes a bash script to the host machine which installs a
+      helper script onto the host. The helper script is used to easily start / attach the toolbox image as a container
+      and properly pass all of the relevant flags to docker (i.e. exposes a port, mounts $HOME to /localhost, etc.)
+
+      You can review the init script here: https://github.com/cloudposse/geodesic/blob/master/rootfs/templates/bootstrap
+    requires:
+      vars:
+        - TOOLBOX_NAME
+        - REGISTRY_LATEST_URL
+    cmds:
+      - docker run --rm {{.REGISTRY_LATEST_URL}} init | bash -s {{.TOOLBOX_NAME}}
 
   run:
-    desc: Run our toolbox image while also mounting your $HOME folder to `/localhost` in the container
+    desc: Run our toolbox image from the helper script installed on the host.
+    deps:
+      - install
+    requires:
+      vars:
+        - TOOLBOX_NAME
     cmds:
-      - "{{.IMAGE_NAME}}"
-# TODO
-# ## Publish the toolbox image to our ECR repo
-# publish: build
-# 	@export VERSION=$(shell git rev-parse --short HEAD); \
-# 		make docker/image/push TARGET_VERSION=$$VERSION
-# 		make docker/image/push TARGET_VERSION=latest;
+      - "{{.TOOLBOX_NAME}}"
+
+  run:build:
+    desc: Build, install, and run the toolbox image
+    cmds:
+      - task: build
+      - task: run
+
+  run:pull:
+    desc: Pull, install, and run the toolbox image
+    cmds:
+      - task: pull
+      - task: run
