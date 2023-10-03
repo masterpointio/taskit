@@ -77,6 +77,8 @@ tasks:
       This executes the `init | bash` geodesic command, which pipes a bash script to the host machine which installs a
       helper script onto the host. The helper script is used to easily start / attach the toolbox image as a container
       and properly pass all of the relevant flags to docker (i.e. exposes a port, mounts $HOME to /localhost, etc.)
+
+      You can review the init script here: https://github.com/cloudposse/geodesic/blob/master/rootfs/templates/bootstrap
     requires:
       vars:
         - TOOLBOX_NAME
