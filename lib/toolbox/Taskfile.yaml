@@ -72,13 +72,13 @@ tasks:
       - docker push {{.REGISTRY_VERSION_URL}}
 
   install:
-    desc: Execute the toolbox wrapper script from geodesic, installing a toolbox start script onto the local host
+    desc: Execute the toolbox bootstrap script from geodesic, installing a toolbox start script (wrapper script) onto the local host
     summary: |
-      This executes the `init | bash` geodesic command, which pipes a bash script to the host machine which installs a
-      helper script onto the host. The helper script is used to easily start / attach the toolbox image as a container
+      This executes the `init | bash` geodesic command (called bootstrap), which pipes a bash script to the host machine that then
+      installs a helper script onto the host. The helper script is used to easily start / attach the toolbox image as a container
       and properly pass all of the relevant flags to docker (i.e. exposes a port, mounts $HOME to /localhost, etc.)
 
-      You can review the init script here: https://github.com/cloudposse/geodesic/blob/master/rootfs/templates/bootstrap
+      You can review the bootstrap script here: https://github.com/cloudposse/geodesic/blob/master/rootfs/templates/bootstrap
     requires:
       vars:
         - TOOLBOX_NAME
@@ -94,7 +94,10 @@ tasks:
       vars:
         - TOOLBOX_NAME
     cmds:
-      - "{{.TOOLBOX_NAME}}"
+      # We do this goofy conditional as the bootstrap script installs at different paths according to OS
+      # and the user's $PATH is not always picked up nicely (particularly on Windows).
+      - |
+        [ -f "/usr/local/bin/{{.TOOLBOX_NAME}}" ] && /usr/local/bin/{{.TOOLBOX_NAME}} || ~/.local/bin/{{.TOOLBOX_NAME}}
 
   run:build:
     desc: Build, install, and run the toolbox image
