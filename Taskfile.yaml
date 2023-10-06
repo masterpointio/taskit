@@ -1,9 +1,13 @@
 version: "3"
 
 includes:
-  aqua: lib/aqua/Taskfile.yaml
-  aws: lib/aws/Taskfile.yaml
-  snaplet: lib/snaplet/Taskfile.yaml
-  toolbox: lib/toolbox/Taskfile.yaml
+  aqua: lib/aqua
+  aws: lib/aws
+  mixins: lib/mixins
+  snaplet: lib/snaplet
+  terraform:
+    taskfile: lib/terraform
+    aliases: [tf]
+  toolbox: lib/toolbox
 
 tasks: {}

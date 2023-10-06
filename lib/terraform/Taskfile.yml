@@ -1,0 +1,76 @@
+version: "3"
+
+vars:
+  BACKEND_CONFIG_PATH: '{{.BACKEND_CONFIG_PATH | default "./backend-configurations"}}'
+  TFVARS_PATH: '{{.TFVARS_PATH | default "./tfvars"}}'
+
+tasks:
+  setup:
+    desc: Internal task to templatize the variables for the other tasks.
+    summary: |
+      This is a workaround for the lack of support for sharing variables between the tasks for the sake of DRY.
+      1. Global vars are being evaluated when the Taskfile.yml is first loaded and at that time,
+        `.CLI_ARGS` is not yet available, that's why we have to duplicate the variables for every task.
+      2. Taskfile commands run in their own shell environments, so if you set an environment variable in one task,
+        it won't persist after that task completes or be available in other tasks.
+    silent: true
+    internal: true
+    vars: &vars
+      ENV:
+        sh: echo "{{.CLI_ARGS}}" | cut -d ' ' -f1 | xargs
+      TF_ARGS:
+        sh: echo "{{.CLI_ARGS}}" | cut -s -d ' ' -f2- | xargs
+      BACKEND_CONFIG_FILE:
+        sh: echo "{{.BACKEND_CONFIG_PATH}}/{{.ENV}}.backend.tf"
+      TFVARS_FILE:
+        sh: echo "{{.TFVARS_PATH}}/{{.ENV}}.tfvars"
+
+  init:
+    desc: Initialize Terraform working directory with a backend configuration file.
+    summary: |
+      Initializes Terraform directory using the backend config file for the specified environment.
+      The `terraform init` arguments can be optionally passed in.
+      Usage: task terraform:init -- ENVIRONMENT [terraform init arguments]
+      Example: task terraform:init -- automation
+    dir: "{{.USER_WORKING_DIR}}"
+    silent: true
+    vars: *vars
+    preconditions:
+      - sh: test -f {{.BACKEND_CONFIG_FILE}}
+        msg: "Backend configuration file does not exist: {{.BACKEND_CONFIG_FILE}}"
+    cmds:
+      - terraform init -backend-config {{.BACKEND_CONFIG_FILE}} {{.TF_ARGS}}
+
+  plan:
+    desc: Generate a Terraform execution plan Terraform loading variable values from the given file.
+    summary: |
+      Generates a Terraform execution plan for a specified environment, using a file to load the variables.
+      The `terraform plan` arguments can be optionally passed in.
+      Requires a variables file specific to the environment to be present.
+      Usage: task terraform:plan -- ENVIRONMENT [terraform plan arguments]
+      Example: task terraform:plan -- automation
+    dir: "{{.USER_WORKING_DIR}}"
+    silent: true
+    vars: *vars
+    preconditions:
+      - sh: test -f {{.TFVARS_FILE}}
+        msg: "Variables file does not exist: {{.TFVARS_FILE}}"
+    cmds:
+      - terraform plan -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
+
+  apply:
+    desc: Create or update infrastructure according to Terraform configuration files in the current directory.
+    summary: |
+      Applies a Terraform execution plan for a specific environment, using a file to load the variables.
+      The `terraform apply` arguments can be optionally passed in.
+      Requires a variables file specific to the environment to be present.
+      Usage: task terraform:apply -- ENVIRONMENT [terraform apply arguments]
+      Example: task terraform:apply -- automation
+    dir: "{{.USER_WORKING_DIR}}"
+    silent: true
+    vars: *vars
+    preconditions:
+      - sh: test -f {{.TFVARS_FILE}}
+        msg: "Variables file does not exist: {{.TFVARS_FILE}}"
+    cmds:
+      - terraform apply -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}

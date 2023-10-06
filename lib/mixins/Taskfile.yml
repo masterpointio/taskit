@@ -1,0 +1,35 @@
+version: "3"
+
+tasks:
+  update-all:
+    desc: "Update a mixin across the components. Example: `task mixins:update-all -- context.tf`."
+    preconditions:
+      - sh: test -f ./mixins/{{.CLI_ARGS}}
+        msg: "File does not exist: ./mixins/{{.CLI_ARGS}}"
+      - sh: test -d ./components && [ "$(ls -A ./components)" ]
+        msg: ./components/ directory is empty or does not exist.
+    sources:
+      - ./mixins/{{.CLI_ARGS}}
+    generates:
+      - ./components/*/{{.CLI_ARGS}}
+    cmds:
+      - cmd: |
+          for comp in ./components/*; do
+            cp -v ./mixins/{{.CLI_ARGS}}  $comp/{{.CLI_ARGS}}
+          done;
+        silent: true
+
+  pull-sops:
+    desc: Pull SOPS secrets mixin from its external source into the working directory.
+    dir: "{{.USER_WORKING_DIR}}"
+    silent: true
+    env:
+      MIXIN_FILE: secrets.sops.tf
+    cmds:
+      - echo "Pulling secrets mixin from 'masterpointio/terraform-secrets-helper' Git repo..."
+      - |
+        if curl -sL https://raw.githubusercontent.com/masterpointio/terraform-secrets-helper/main/exports/$MIXIN_FILE -o $MIXIN_FILE; then
+            echo "File $MIXIN_FILE was successfully pulled."
+        else
+            echo "File $MIXIN_FILE pull failed."
+        fi;
