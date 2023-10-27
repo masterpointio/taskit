@@ -3,6 +3,7 @@ version: "3"
 includes:
   aqua: lib/aqua
   aws: lib/aws
+  components: lib/components
   mixins: lib/mixins
   snaplet: lib/snaplet
   terraform:
