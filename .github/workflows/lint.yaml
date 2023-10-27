@@ -2,13 +2,11 @@ name: Lint
 
 on: pull_request
 
-permissions: read-all
-
-# permissions:
-#   actions: read
-#   checks: write
-#   contents: read
-#   pull-requests: read
+permissions:
+  actions: read
+  checks: write
+  contents: read
+  pull-requests: read
 
 jobs:
   lint:
