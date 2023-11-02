@@ -1,7 +1,12 @@
 name: Lint
 
 on: pull_request
-permissions: read-all
+
+permissions:
+  actions: read
+  checks: write
+  contents: read
+  pull-requests: read
 
 jobs:
   lint:
@@ -9,4 +14,4 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Trunk Check
-        uses: trunk-io/trunk-action@v1.1.2
+        uses: trunk-io/trunk-action@v1.1.9

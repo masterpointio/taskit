@@ -1,0 +1,46 @@
+version: "3"
+
+tasks:
+  init:
+    desc: Initialize a new Masterpoint's component directory and fetch its configuration and sources.
+    requires:
+      vars:
+        - COMPONENT_NAME
+        - COMPONENT_VERSION
+    silent: true
+    cmds:
+      - echo '👋 Initializing component {{.COMPONENT_NAME}}...'
+      - mkdir -p ./components/{{.COMPONENT_NAME}}
+      - echo 'Fetching component config file...'
+      - |
+        curl -L https://raw.githubusercontent.com/masterpointio/terraform-components/{{.COMPONENT_VERSION}}/templates/component.yaml \
+        | sed -e 's|COMPONENT_NAME|{{.COMPONENT_NAME}}|g' -e 's|COMPONENT_VERSION|{{.COMPONENT_VERSION}}|g' \
+        > ./components/{{.COMPONENT_NAME}}/component.yaml
+      - task: update
+
+  update:
+    desc: Update an existing component from its source based on the config information.
+    requires:
+      vars:
+        - COMPONENT_NAME
+    vars:
+      COMPONENT_PATH: "components/{{.COMPONENT_NAME}}"
+      COMPONENT_CONFIG: "{{.COMPONENT_PATH}}/component.yaml"
+      COMPONENT_SOURCE_URI:
+        sh: dasel -f {{.COMPONENT_CONFIG}} '.component.source.uri'
+      COMPONENT_VERSION:
+        sh: dasel -f {{.COMPONENT_CONFIG}} '.component.source.version'
+      TAR_FILE:
+        sh: echo 'repo_{{.COMPONENT_VERSION}}.tar.gz' | tr '/' '_'
+    silent: true
+    cmds:
+      - echo 'Updating component {{.COMPONENT_NAME}} from {{.COMPONENT_SOURCE_URI}} with version {{.COMPONENT_VERSION}}...'
+      - curl -LJ {{.COMPONENT_SOURCE_URI}}{{.COMPONENT_VERSION}} -o {{.TAR_FILE}}
+      - |
+        echo 'Extracting {{.TAR_FILE}}...'
+        # List the contents of the archive and get the directory name
+        REPO_DIR=$(tar -tf {{.TAR_FILE}} | head -n 1 | sed -e 's@/.*@@')
+        tar -xzf {{.TAR_FILE}}
+        mv -f $REPO_DIR/{{.COMPONENT_PATH}}/* {{.COMPONENT_PATH}}
+        rm -f {{.TAR_FILE}} && rm -rf $REPO_DIR
+      - echo "✅ Component {{.COMPONENT_NAME}} updated successfully!"
