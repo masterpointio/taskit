@@ -57,7 +57,7 @@ tasks:
         echo -e "\n"
         if [[ -n "{{.TASKIT_LOCAL_PATH}}" ]]; then
           echo "Copying taskit from local path..."
-          rsync -rq --exclude=.git --exclude= {{.TASKIT_LOCAL_PATH}} .taskit
+          rsync -rq --exclude=.git --exclude= {{.TASKIT_LOCAL_PATH}}/ .taskit
         else
           echo "Downloading taskit from remote repo..."
           git clone -b {{.TASKIT_BRANCH}} https://github.com/masterpointio/taskit.git .taskit/
