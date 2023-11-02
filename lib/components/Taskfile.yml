@@ -13,7 +13,7 @@ tasks:
       - mkdir -p ./components/{{.COMPONENT_NAME}}
       - echo 'Fetching component config file...'
       - |
-        curl -L https://raw.githubusercontent.com/masterpointio/terraform-components/$COMPONENT_VERSION/templates/component.yaml \
+        curl -L https://raw.githubusercontent.com/masterpointio/terraform-components/{{.COMPONENT_VERSION}}/templates/component.yaml \
         | sed -e 's|COMPONENT_NAME|{{.COMPONENT_NAME}}|g' -e 's|COMPONENT_VERSION|{{.COMPONENT_VERSION}}|g' \
         > ./components/{{.COMPONENT_NAME}}/component.yaml
       - task: update
@@ -27,9 +27,9 @@ tasks:
       COMPONENT_PATH: "components/{{.COMPONENT_NAME}}"
       COMPONENT_CONFIG: "{{.COMPONENT_PATH}}/component.yaml"
       COMPONENT_SOURCE_URI:
-        sh: yq eval '.component.source.uri' {{.COMPONENT_CONFIG}}
+        sh: dasel -f {{.COMPONENT_CONFIG}} '.component.source.uri'
       COMPONENT_VERSION:
-        sh: yq eval '.component.source.version' {{.COMPONENT_CONFIG}}
+        sh: dasel -f {{.COMPONENT_CONFIG}} '.component.source.version'
       TAR_FILE:
         sh: echo 'repo_{{.COMPONENT_VERSION}}.tar.gz' | tr '/' '_'
     silent: true
