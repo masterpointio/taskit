@@ -146,6 +146,6 @@ tasks:
     cmds:
       - task: restore
         vars:
-          RESTORE_OPTIONS: --yes
+          RESTORE_OPTIONS: --yes --no-progress
           RESTORE_SNAPSHOT: "{{.RESTORE_SNAPSHOT}}"
           SNAPSHOT_PATH: "{{.SNAPSHOT_PATH}}"
