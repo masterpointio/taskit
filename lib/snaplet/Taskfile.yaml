@@ -121,7 +121,21 @@ tasks:
 
   restore:
     desc: Restores the given RESTORE_SNAPSHOT to the SNAPLET_TARGET_DATABASE_URL database.
-    prompt: This will wipe all of the data in the given SNAPLET_TARGET_DATABASE_URL. Are you sure?
+    silent: true
+    vars:
+      RESTORE_OPTIONS: '{{.RESTORE_OPTIONS | default ""}}'
+      RESTORE_SNAPSHOT: '{{.RESTORE_SNAPSHOT | default "latest"}}'
+      SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}
+    requires:
+      vars:
+        - SNAPLET_TARGET_DATABASE_URL
+    cmds:
+      - printf "\n\n👋 Restoring snapshot from {{.SNAPSHOT_PATH}}\n"
+      - snaplet snapshot restore {{.RESTORE_OPTIONS}} {{.SNAPSHOT_PATH}}
+      - printf "\n\n💯 Restored snapshot from {{.SNAPSHOT_PATH}}\n"
+
+  restore:noprompt:
+    desc: Restores the given RESTORE_SNAPSHOT to the SNAPLET_TARGET_DATABASE_URL database.
     silent: true
     vars:
       RESTORE_SNAPSHOT: '{{.RESTORE_SNAPSHOT | default "latest"}}'
@@ -130,6 +144,8 @@ tasks:
       vars:
         - SNAPLET_TARGET_DATABASE_URL
     cmds:
-      - printf "\n\n👋 Restoring snapshot from {{.SNAPSHOT_PATH}}\n"
-      - snaplet snapshot restore {{.SNAPSHOT_PATH}}
-      - printf "\n\n💯 Restored snapshot from {{.SNAPSHOT_PATH}}\n"
+      - task: restore
+        vars:
+          RESTORE_OPTIONS: --yes --no-progress
+          RESTORE_SNAPSHOT: "{{.RESTORE_SNAPSHOT}}"
+          SNAPSHOT_PATH: "{{.SNAPSHOT_PATH}}"
