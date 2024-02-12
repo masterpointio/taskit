@@ -2,24 +2,43 @@ version: "3"
 
 tasks:
   init:
-    desc: Initialize a new Masterpoint's component directory and fetch its configuration and sources.
+    desc: Initializes a new Masterpoint's component directory and fetch its configuration and sources.
+    summary: |
+      This initializes a new component directory for Masterpoint and fetches its configuration and sources.
+      It requires COMPONENT_NAME and optionally COMPONENT_VERSION. If COMPONENT_VERSION is not set, it fetches the latest commit SHA from the main branch.
+      Usage example:
+      `task [namespace:]init COMPONENT_NAME=example-component COMPONENT_VERSION=ca6cad6a1c3be75fc39533b0e18a0b52c20bb957`
+      `task [namespace:]init COMPONENT_NAME=example-component` (This will use the latest commit SHA from the main branch)
     requires:
       vars:
         - COMPONENT_NAME
-        - COMPONENT_VERSION
     silent: true
     cmds:
       - echo '👋 Initializing component {{.COMPONENT_NAME}}...'
       - mkdir -p ./components/{{.COMPONENT_NAME}}
       - echo 'Fetching component config file...'
       - |
-        curl -L https://raw.githubusercontent.com/masterpointio/terraform-components/{{.COMPONENT_VERSION}}/templates/component.yaml \
-        | sed -e 's|COMPONENT_NAME|{{.COMPONENT_NAME}}|g' -e 's|COMPONENT_VERSION|{{.COMPONENT_VERSION}}|g' \
+        if [ -z "{{.COMPONENT_VERSION}}" ]; then
+          echo 'COMPONENT_VERSION not set, using latest commit SHA from main branch...'
+          COMPONENT_VERSION=$(curl -s https://api.github.com/repos/masterpointio/terraform-components/commits/main | jq -r '.sha')
+        else
+          COMPONENT_VERSION="{{.COMPONENT_VERSION}}"
+        fi
+        echo "Using COMPONENT_VERSION: $COMPONENT_VERSION"
+        echo "https://raw.githubusercontent.com/masterpointio/terraform-components/$COMPONENT_VERSION/templates/component.yaml"
+        curl -L https://raw.githubusercontent.com/masterpointio/terraform-components/$COMPONENT_VERSION/templates/component.yaml \
+        | sed -e "s|COMPONENT_NAME|{{.COMPONENT_NAME}}|g" -e "s|COMPONENT_VERSION|$COMPONENT_VERSION|g" \
         > ./components/{{.COMPONENT_NAME}}/component.yaml
       - task: update
 
   update:
-    desc: Update an existing component from its source based on the config information.
+    desc: Updates an existing component from its source based on the config information.
+    summary: |
+      Refreshes an existing component by downloading the version specified on the configuration in 'component.yaml'.
+      It requires the COMPONENT_NAME variable for identification.
+      Usage example:
+      `task [namespace:]update COMPONENT_NAME=example-component`
+
     requires:
       vars:
         - COMPONENT_NAME
