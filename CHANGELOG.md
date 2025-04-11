@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/masterpointio/taskit/compare/v0.1.0...v0.2.0) (2025-04-11)
+
+
+### Features
+
+* **snaplet:** use `SNAPLET_TARGET_DB_NAME` to specify specific databases ([#13](https://github.com/masterpointio/taskit/issues/13)) ([739b318](https://github.com/masterpointio/taskit/commit/739b3185d69d36eac8b8b62f13617651a5d121b8))
+
 ## 0.1.0 (2024-12-23)
 
 
