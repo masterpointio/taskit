@@ -92,8 +92,8 @@ tasks:
       - |
         if [ "{{.UPLOAD_AS_LATEST}}" -eq "true" ]; then
           # We first remove everything so there are no artifacts leftover from a previous upload that we're not overwriting.
-          aws s3 rm --recursive {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/latest
-          aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/latest
+          aws s3 rm --recursive {{.SNAPLET_BUCKET}}/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/latest
+          aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/latest
         fi
 
   download:
