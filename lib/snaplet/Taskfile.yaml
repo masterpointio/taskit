@@ -86,8 +86,9 @@ tasks:
       vars:
         - SNAPLET_BUCKET
         - SNAPSHOT_ENV
+        - SNAPLET_TARGET_DB_NAME
     cmds:
-      - aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}}
+      - aws s3 cp --sse=AES256 --recursive {{.SNAPSHOT_PATH}} {{.SNAPLET_BUCKET}}/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.SNAPSHOT_NAME}}
       - |
         if [ "{{.UPLOAD_AS_LATEST}}" -eq "true" ]; then
           # We first remove everything so there are no artifacts leftover from a previous upload that we're not overwriting.
@@ -115,8 +116,9 @@ tasks:
       vars:
         - SNAPLET_BUCKET
         - SNAPSHOT_ENV
+        - SNAPLET_TARGET_DB_NAME
     cmds:
-      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}} {{.SNAPSHOT_PATH}}
+      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}} {{.SNAPSHOT_PATH}}
       - printf "\n\n⬇ Snapshot downloaded to {{.SNAPSHOT_PATH}}\n\n"
 
   restore:
