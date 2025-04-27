@@ -36,7 +36,7 @@ tasks:
         .terraform-docs.yaml
         LICENSE
         aqua.yaml
-      TMP_DIR: ".tmp-template-sync"
+      TMP_DIR: .tmp-template-sync
     cmds:
       - rm -rf {{.TMP_DIR}}
       - git clone --depth 1 https://github.com/masterpointio/terraform-module-template.git {{.TMP_DIR}}
