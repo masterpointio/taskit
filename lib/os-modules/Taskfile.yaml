@@ -1,0 +1,51 @@
+version: "3"
+
+tasks:
+  sync:
+    desc: |
+      Sync files from `terraform-module-template` to specified Terraform open-source module repos.
+      Example: `task os:sync -- terraform-spacelift-automation`
+    summary: |
+      This will sync the specified list of files and directories from the remote template repository
+      to each of the default Terraform module repositories listed in DEFAULT_MODULES.
+      The task will synchronize the hardoded list of common files and directories.
+      To sync to a specific repository (or a custom list of repositories), pass their names as arguments:
+      `task os:sync -- terraform-custom-module`
+      or for multiple modules: `task modules:sync -- "terraform-custom-module terraform-another-module"`
+
+    vars:
+      DEFAULT_MODULES: |
+        terraform-aws-ssm-agent \
+        terraform-aws-tailscale \
+        terraform-datadog-users \
+        terraform-github-teams \
+        terraform-github-organization \
+        terraform-postgres-automation \
+        terraform-secrets-helper \
+        terraform-spacelift-automation \
+        terraform-spacelift-aws-integrations \
+        terraform-spacelift-events-collector-audit-trail \
+        terraform-spacelift-policies
+      MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+      FILES: >-
+        .github
+        .trunk
+        .coderabbit.yaml
+        .editorconfig
+        .gitignore
+        .terraform-docs.yaml
+        LICENSE
+        aqua.yaml
+      TMP_DIR: ".tmp-template-sync"
+    cmds:
+      - rm -rf {{.TMP_DIR}}
+      - git clone --depth 1 https://github.com/masterpointio/terraform-module-template.git {{.TMP_DIR}}
+      - |
+        for module in {{.MODULES}}; do
+          echo "Syncing files to ../$module..."
+          for file in {{.FILES}}; do
+            echo "  Syncing $file"
+            rsync -av --delete {{.TMP_DIR}}/$file ../$module/
+          done
+        done
+      - rm -rf {{.TMP_DIR}}

@@ -5,6 +5,7 @@ includes:
   aws: lib/aws
   components: lib/components
   mixins: lib/mixins
+  os: lib/os-modules
   snaplet: lib/snaplet
   terraform:
     taskfile: lib/terraform
