@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/masterpointio/taskit/compare/v0.2.0...v0.3.0) (2025-04-28)
+
+
+### Features
+
+* **os-modules:** add tasks lib for OS modules management ([#15](https://github.com/masterpointio/taskit/issues/15)) ([d52cc04](https://github.com/masterpointio/taskit/commit/d52cc040049096a3d0962e18a10eb6a7be43baa5))
+
 ## [0.2.0](https://github.com/masterpointio/taskit/compare/v0.1.0...v0.2.0) (2025-04-11)
 
 
