@@ -1,0 +1,124 @@
+version: "3"
+
+vars:
+  DEFAULT_MODULES: |
+    terraform-aws-ssm-agent \
+    terraform-aws-tailscale \
+    terraform-datadog-users \
+    terraform-github-teams \
+    terraform-github-organization \
+    terraform-postgres-automation \
+    terraform-secrets-helper \
+    terraform-spacelift-automation \
+    terraform-spacelift-aws-integrations \
+    terraform-spacelift-events-collector-audit-trail \
+    terraform-spacelift-policies
+  SYNC_BRANCH: chore/sync-with-template
+tasks:
+  sync:
+    desc: |
+      Sync files from `terraform-module-template` to specified Terraform open-source module repos.
+      Example: `task os:sync -- terraform-spacelift-automation`
+    summary: |
+      This will sync the specified list of files and directories from the remote template repository
+      to each of the default Terraform module repositories listed in DEFAULT_MODULES.
+      The task will synchronize the hardoded list of common files and directories.
+      To sync to a specific repository (or a custom list of repositories), pass their names as arguments:
+      `task os:sync -- terraform-custom-module`
+      or for multiple modules: `task os:sync -- "terraform-custom-module terraform-another-module"`
+
+    vars:
+      MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+      FILES: >-
+        .github
+        .trunk
+        .coderabbit.yaml
+        .editorconfig
+        .gitignore
+        .terraform-docs.yaml
+        LICENSE
+        aqua.yaml
+      TMP_DIR: .tmp-template-sync
+    cmds:
+      - rm -rf {{.TMP_DIR}}
+      - git clone --depth 1 https://github.com/masterpointio/terraform-module-template.git {{.TMP_DIR}}
+      - |
+        for module in {{.MODULES}}; do
+          echo "Syncing files to ../$module..."
+          for file in {{.FILES}}; do
+            echo "  Syncing $file"
+            rsync -av --delete {{.TMP_DIR}}/$file ../$module/
+          done
+        done
+      - rm -rf {{.TMP_DIR}}
+
+  pull-and-branch:
+    desc: |
+      Pull main branch and create a sync branch for specified Terraform open-source module repos.
+      Example: `task os:pull-and-branch -- terraform-spacelift-automation`
+    summary: |
+      This will pull the main branch and create a new branch named 'chore/sync-with-template'
+      for each of the default Terraform module repositories listed in DEFAULT_MODULES.
+      To sync to a specific repository (or a custom list of repositories), pass their names as arguments:
+      `task os:pull-and-branch -- terraform-custom-module`
+      or for multiple modules: `task os:pull-and-branch -- "terraform-custom-module terraform-another-module"`
+
+    vars:
+      MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+    cmds:
+      - |
+        for module in {{.MODULES}}; do
+          echo "🚀 Processing ../$module..."
+          cd ../$module
+          echo "⬇️ Pulling main branch..."
+          git checkout main
+          git pull origin main
+          echo "🔄 Creating sync branch..."
+          git checkout -b {{.SYNC_BRANCH}}
+          cd -
+        done
+
+  push:
+    desc: |
+      Commit and push changes with the specified commit message.
+      Example: `task os:push -- terraform-spacelift-automation`
+    summary: |
+      This will commit and push changes with the message "chore: update with the latest template state"
+      for each of the specified Terraform module repositories.
+      To push to a specific repository (or a custom list of repositories), pass their names as arguments:
+      `task os:push -- terraform-custom-module`
+      or for multiple modules: `task os:push -- "terraform-custom-module terraform-another-module"`
+
+    vars:
+      MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+    cmds:
+      - |
+        for module in {{.MODULES}}; do
+          echo "🚀 Processing ../$module..."
+          cd ../$module
+          echo "📝 Committing changes..."
+          git add .
+          git commit -m "chore: update with the latest template state"
+          echo "⬆️ Pushing changes..."
+          git push origin {{.SYNC_BRANCH}}
+          cd -
+        done
+
+  sync-all:
+    desc: |
+      Pull main branch, create a sync branch, and sync with template for specified Terraform open-source module repos.
+      Example: `task os:sync-all -- terraform-spacelift-automation`
+    summary: |
+      This will:
+      1. Pull the main branch and create a new branch named 'chore/sync-with-template'
+      2. Sync files from the template repository
+      for each of the default Terraform module repositories listed in DEFAULT_MODULES.
+      To sync to a specific repository (or a custom list of repositories), pass their names as arguments:
+      `task os:sync-all -- terraform-custom-module`
+      or for multiple modules: `task os:sync-all -- "terraform-custom-module terraform-another-module"`
+
+    vars:
+      MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+    cmds:
+      - task: pull-and-branch
+      - task: sync
