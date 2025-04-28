@@ -7,6 +7,7 @@ language: en
 tone_instructions: |
   Provide feedback in a professional, friendly, constructive, and concise tone.
   Offer clear, specific suggestions and best practices to help enhance the code quality and promote learning.
+  Only comment on significant issues.
 
 early_access: true
 
@@ -26,6 +27,8 @@ knowledge_base:
 reviews:
   profile: chill
   auto_review:
+    # Disable incremental code review on each push
+    auto_incremental_review: false
     # Ignore reviewing if the title of the pull request contains any of these keywords (case-insensitive)
     ignore_title_keywords:
       - wip
@@ -42,6 +45,10 @@ reviews:
         Provide recommendations for clarity, maintainability, and adherence to Taskfile best practices, including usage of variables, environment blocks, and includes.
         These configurations may also contain embedded Bash scripts or commands.
         Demonstrate bash scripting best practices such as error handling, secure variable expansions, and clear documentation.
+  changed_files_summary: false
+  poem: false
+  # Don't post review details on each review.
+  sequence_diagrams: false
   tools:
     # By default, all tools are enabled.
     # Masterpoint uses Trunk (https://trunk.io) so we do not need a lot of this feedback due to overlap.

@@ -11,7 +11,7 @@ tasks:
       The task will synchronize the hardoded list of common files and directories.
       To sync to a specific repository (or a custom list of repositories), pass their names as arguments:
       `task os:sync -- terraform-custom-module`
-      or for multiple modules: `task modules:sync -- "terraform-custom-module terraform-another-module"`
+      or for multiple modules: `task os:sync -- "terraform-custom-module terraform-another-module"`
 
     vars:
       DEFAULT_MODULES: |
