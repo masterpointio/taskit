@@ -43,9 +43,13 @@ tasks:
       - rm -rf {{.TMP_DIR}}
       - git clone --depth 1 https://github.com/masterpointio/terraform-module-template.git {{.TMP_DIR}}
       - |
-        for module in {{.MODULES}}; do
+        # Convert newlines to spaces and remove backslashes
+        modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
+        for module in $modules
+        do
           echo "Syncing files to ../$module..."
-          for file in {{.FILES}}; do
+          for file in {{.FILES}}
+          do
             echo "  Syncing $file"
             rsync -av --delete {{.TMP_DIR}}/$file ../$module/
           done
@@ -67,7 +71,10 @@ tasks:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
     cmds:
       - |
-        for module in {{.MODULES}}; do
+        # Convert newlines to spaces and remove backslashes
+        modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
+        for module in $modules
+        do
           echo "🚀 Processing ../$module..."
           cd ../$module
           echo "⬇️ Pulling main branch..."
@@ -93,7 +100,10 @@ tasks:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
     cmds:
       - |
-        for module in {{.MODULES}}; do
+        # Convert newlines to spaces and remove backslashes
+        modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
+        for module in $modules
+        do
           echo "🚀 Processing ../$module..."
           cd ../$module
           echo "📝 Committing changes..."
