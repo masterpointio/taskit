@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/masterpointio/taskit/compare/v0.3.0...v0.3.1) (2025-04-30)
+
+
+### Bug Fixes
+
+* **os-modules:** improve shell script handling ([#17](https://github.com/masterpointio/taskit/issues/17)) ([2ca19ed](https://github.com/masterpointio/taskit/commit/2ca19edb60f18bf07ca1ea49c338bf2c4ad5d3d7))
+
 ## [0.3.0](https://github.com/masterpointio/taskit/compare/v0.2.0...v0.3.0) (2025-04-28)
 
 
