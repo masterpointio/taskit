@@ -116,7 +116,7 @@ tasks:
   setup-template:
     desc: Set up the template repository in a shared temporary directory
     cmds:
-      - rm -rf {{.SHARED_TMP_DIR}}
+      - task: cleanup-template
       - git clone --depth 1 https://github.com/masterpointio/terraform-module-template.git {{.SHARED_TMP_DIR}}
 
   cleanup-template:
