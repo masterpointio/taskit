@@ -7,6 +7,7 @@ vars:
     terraform-datadog-users \
     terraform-github-teams \
     terraform-github-organization \
+    terraform-googleworkspace-users-groups-automation \
     terraform-postgres-automation \
     terraform-secrets-helper \
     terraform-spacelift-automation \
@@ -14,6 +15,7 @@ vars:
     terraform-spacelift-events-collector-audit-trail \
     terraform-spacelift-policies
   SYNC_BRANCH: chore/sync-with-template
+  SHARED_TMP_DIR: .tmp-template-sync
 tasks:
   sync:
     desc: |
@@ -38,10 +40,7 @@ tasks:
         .terraform-docs.yaml
         LICENSE
         aqua.yaml
-      TMP_DIR: .tmp-template-sync
     cmds:
-      - rm -rf {{.TMP_DIR}}
-      - git clone --depth 1 https://github.com/masterpointio/terraform-module-template.git {{.TMP_DIR}}
       - |
         # Convert newlines to spaces and remove backslashes
         modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
@@ -51,10 +50,9 @@ tasks:
           for file in {{.FILES}}
           do
             echo "  Syncing $file"
-            rsync -av --delete {{.TMP_DIR}}/$file ../$module/
+            rsync -av --delete {{.SHARED_TMP_DIR}}/$file ../$module/
           done
         done
-      - rm -rf {{.TMP_DIR}}
 
   pull-and-branch:
     desc: |
@@ -114,6 +112,17 @@ tasks:
           cd -
         done
 
+  setup-template:
+    desc: Set up the template repository in a shared temporary directory
+    cmds:
+      - task: cleanup-template
+      - git clone --depth 1 https://github.com/masterpointio/terraform-module-template.git {{.SHARED_TMP_DIR}}
+
+  cleanup-template:
+    desc: Clean up the shared temporary directory
+    cmds:
+      - rm -rf {{.SHARED_TMP_DIR}}
+
   sync-all:
     desc: |
       Pull main branch, create a sync branch, and sync with template for specified Terraform open-source module repos.
@@ -130,5 +139,7 @@ tasks:
     vars:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
     cmds:
+      - task: setup-template
       - task: pull-and-branch
       - task: sync
+      - task: cleanup-template
