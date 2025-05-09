@@ -7,7 +7,6 @@ vars:
     terraform-datadog-users \
     terraform-github-teams \
     terraform-github-organization \
-    terraform-googleworkspace-user-group-management \
     terraform-googleworkspace-users-groups-automation \
     terraform-postgres-automation \
     terraform-secrets-helper \
