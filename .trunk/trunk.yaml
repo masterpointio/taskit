@@ -1,6 +1,6 @@
 version: 0.1
 cli:
-  version: 1.22.12
+  version: 1.22.15
 plugins:
   sources:
     - id: trunk
@@ -9,13 +9,13 @@ plugins:
 lint:
   enabled:
     - actionlint@1.7.7
-    - checkov@3.2.408
+    - checkov@3.2.413
     - trivy@0.61.1
     - yamllint@1.37.0
     - git-diff-check
     - markdownlint@0.44.0
     - prettier@3.5.3
-    - trufflehog@3.88.25
+    - trufflehog@3.88.26
 runtimes:
   enabled:
     - node@18.20.5
