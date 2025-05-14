@@ -9,7 +9,7 @@ tasks:
       OWNER: masterpointio
       REPO: internal-cursor-rules
       REF: main
-      OUTDIR: .cursor-rules
+      OUTDIR: .cursor/rules
       filename: '{{default "cursor_rules.mdc" .CLI_ARGS}}'
     cmds:
       - |
@@ -40,7 +40,7 @@ tasks:
       REPO: internal-cursor-rules
       REF: main
       SRC_DIR: rules
-      OUTDIR: .cursor-rules
+      OUTDIR: .cursor/rules
     cmds:
       - |
         echo "Fetching list of files from GitHub folder '{{.SRC_DIR}}'..."
