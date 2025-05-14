@@ -1,0 +1,73 @@
+version: "3"
+
+tasks:
+  fetch-rule:
+    desc: |
+      Fetch a single file from a private GitHub repo.
+      Example: `task cursor:fetch-rule -- cursor_rules.mdc`
+    vars:
+      OWNER: masterpointio
+      REPO: internal-cursor-rules
+      REF: main
+      OUTDIR: .cursor-rules
+      filename: '{{default "cursor_rules.mdc" .CLI_ARGS}}'
+    cmds:
+      - |
+        # Ensure output directory exists
+        mkdir -p {{.OUTDIR}}
+
+        # Get filepath using the filename variable
+        filepath="rules/{{.filename}}"
+        echo "Fetching $filepath"
+
+        # Remove 'rules/' prefix from output filename
+        outfile=$(basename "$filepath")
+
+        curl -sSL \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github.v3.raw" \
+          https://api.github.com/repos/{{.OWNER}}/{{.REPO}}/contents/$filepath?ref={{.REF}} \
+          -o {{.OUTDIR}}/$outfile
+    preconditions:
+      - test -n "$GITHUB_TOKEN"
+
+  fetch-rules-all:
+    desc: |
+      Fetch all files from the 'rules/' folder in a private GitHub repo.
+      Example: task cursor:fetch-rules-all
+    vars:
+      OWNER: masterpointio
+      REPO: internal-cursor-rules
+      REF: main
+      SRC_DIR: rules
+      OUTDIR: .cursor-rules
+    cmds:
+      - |
+        echo "Fetching list of files from GitHub folder '{{.SRC_DIR}}'..."
+
+        # Make sure output directory exists
+        mkdir -p {{.OUTDIR}}
+
+        # Fetch list of files in the folder
+        curl -sSL \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          https://api.github.com/repos/{{.OWNER}}/{{.REPO}}/contents/{{.SRC_DIR}}?ref={{.REF}} \
+          | jq -r '.[] | select(.type == "file") | .path' \
+          | while read filepath; do
+            echo "Downloading $filepath"
+
+            # Strip rules/ prefix
+            filename=$(basename "$filepath")
+
+            # Ensure output directory exists
+            mkdir -p {{.OUTDIR}}
+
+            curl -sSL \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Accept: application/vnd.github.v3.raw" \
+              https://api.github.com/repos/{{.OWNER}}/{{.REPO}}/contents/$filepath?ref={{.REF}} \
+              -o {{.OUTDIR}}/$filename
+          done
+    preconditions:
+      - command -v jq >/dev/null 2>&1
+      - test -n "$GITHUB_TOKEN"
