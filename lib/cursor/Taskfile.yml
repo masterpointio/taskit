@@ -1,15 +1,18 @@
 version: "3"
 
+vars:
+  OWNER: masterpointio
+  REPO: internal-cursor-rules
+  OUTDIR: .cursor/rules # output directory is the local directory to save the files in
+  REF: main # the git branch to fetch files from
+  SRC_DIR: rules # directory in the repo to fetch files from
+
 tasks:
   fetch-rule:
     desc: |
       Fetch a single file from a private GitHub repo.
       Example: `task cursor:fetch-rule -- cursor_rules.mdc`
     vars:
-      OWNER: masterpointio
-      REPO: internal-cursor-rules
-      REF: main
-      OUTDIR: .cursor/rules
       filename: '{{default "cursor_rules.mdc" .CLI_ARGS}}'
     cmds:
       - |
@@ -17,7 +20,7 @@ tasks:
         mkdir -p {{.OUTDIR}}
 
         # Get filepath using the filename variable
-        filepath="rules/{{.filename}}"
+        filepath="{{.SRC_DIR}}/{{.filename}}"
         echo "Fetching $filepath"
 
         # Remove 'rules/' prefix from output filename
@@ -35,12 +38,6 @@ tasks:
     desc: |
       Fetch all files from the 'rules/' folder in a private GitHub repo.
       Example: task cursor:fetch-rules-all
-    vars:
-      OWNER: masterpointio
-      REPO: internal-cursor-rules
-      REF: main
-      SRC_DIR: rules
-      OUTDIR: .cursor/rules
     cmds:
       - |
         echo "Fetching list of files from GitHub folder '{{.SRC_DIR}}'..."
