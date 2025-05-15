@@ -5,3 +5,5 @@ registries:
 packages:
   - name: go-task/task@v3.31.0
   - name: TomWright/dasel@v2.4.1
+  - name: stedolan/jq@jq-1.7.1
+    tags: [cursor]
