@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/masterpointio/taskit/compare/v0.3.1...v0.4.0) (2025-05-16)
+
+
+### Features
+
+* add commands to download cursor rules ([#20](https://github.com/masterpointio/taskit/issues/20)) ([de411c2](https://github.com/masterpointio/taskit/commit/de411c252b6adb3ce49156dbd42b8cc2c8e575c8))
+
 ## [0.3.1](https://github.com/masterpointio/taskit/compare/v0.3.0...v0.3.1) (2025-04-30)
 
 
