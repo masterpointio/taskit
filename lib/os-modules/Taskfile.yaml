@@ -67,19 +67,41 @@ tasks:
 
     vars:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+      DELETE_EXISTING_SYNC_BRANCH: "{{.DELETE_EXISTING_SYNC_BRANCH | default false}}"
     cmds:
       - |
         # Convert newlines to spaces and remove backslashes
         modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
         for module in $modules
         do
-          echo "🚀 Processing ../$module..."
+          echo -e "\n\n🚀 Processing ---------------- $module \n"
+          if [ ! -d ../$module ]; then
+            echo "🧲 Cloning repository..."
+            git clone "git@github.com:masterpointio/$module.git" ../$module
+          fi
           cd ../$module
-          echo "⬇️ Pulling main branch..."
+
+          echo "⬇️  Pulling main branch..."
           git checkout main
           git pull origin main
-          echo "🔄 Creating sync branch..."
-          git checkout -b {{.SYNC_BRANCH}}
+
+          echo "🔄 Creating sync branch ..."
+
+          # If branch exists and delete option is turned off - skip creation
+          if git branch --list "{{.SYNC_BRANCH}}" | grep -q "{{.SYNC_BRANCH}}" && [ "{{.DELETE_EXISTING_SYNC_BRANCH}}" = "false" ]; then
+            echo "⏭️  Branch {{.SYNC_BRANCH}} already exists, skipping creation."
+
+          # If branch exists and delete option is turned on - delete and create new branch
+          elif git branch --list "{{.SYNC_BRANCH}}" | grep -q "{{.SYNC_BRANCH}}" && [ "{{.DELETE_EXISTING_SYNC_BRANCH}}" = "true" ]; then
+            echo "⏭️  Branch {{.SYNC_BRANCH}} already exists, deleting it."
+            git branch -D {{.SYNC_BRANCH}}
+            git checkout -b {{.SYNC_BRANCH}}
+
+          # If branch does not exist - create new branch
+          else
+            git checkout -b {{.SYNC_BRANCH}}
+          fi
+
           cd -
         done
 
@@ -138,6 +160,7 @@ tasks:
 
     vars:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+      DELETE_EXISTING_SYNC_BRANCH: "{{.DELETE_EXISTING_SYNC_BRANCH | default false}}"
     cmds:
       - task: setup-template
       - task: pull-and-branch
