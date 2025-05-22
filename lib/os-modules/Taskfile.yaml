@@ -8,7 +8,7 @@ vars:
     terraform-github-teams \
     terraform-github-organization \
     terraform-googleworkspace-users-groups-automation \
-    terraform-postgres-automation \
+    terraform-postgres-config-dbs-users-roles \
     terraform-secrets-helper \
     terraform-spacelift-automation \
     terraform-spacelift-aws-integrations \
