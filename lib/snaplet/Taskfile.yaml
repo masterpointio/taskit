@@ -118,7 +118,7 @@ tasks:
         - SNAPSHOT_ENV
         - SNAPLET_TARGET_DB_NAME
     cmds:
-      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}} {{.SNAPSHOT_PATH}}
+      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}} {{.SNAPSHOT_PATH}}
       - printf "\n\n⬇ Snapshot downloaded to {{.SNAPSHOT_PATH}}\n\n"
 
   restore:
