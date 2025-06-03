@@ -130,7 +130,6 @@ tasks:
       SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}
     requires:
       vars:
-        - SNAPLET_TARGET_DB_NAME
         - SNAPLET_TARGET_DATABASE_URL
     cmds:
       - printf "\n\n👋 Restoring snapshot from {{.SNAPSHOT_PATH}}\n"
