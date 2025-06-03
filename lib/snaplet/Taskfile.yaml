@@ -124,6 +124,8 @@ tasks:
   restore:
     desc: Restores the given RESTORE_SNAPSHOT to the SNAPLET_TARGET_DATABASE_URL database.
     silent: true
+    env:
+      SNAPLET_TARGET_DATABASE_URL: "{{.SNAPLET_TARGET_DATABASE_URL}}"
     vars:
       RESTORE_OPTIONS: '{{.RESTORE_OPTIONS | default ""}}'
       RESTORE_SNAPSHOT: '{{.RESTORE_SNAPSHOT | default "latest"}}'
