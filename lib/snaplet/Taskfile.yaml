@@ -111,23 +111,25 @@ tasks:
       - task: validate-snaplet-bucket-access
     vars:
       RESTORE_SNAPSHOT: '{{.RESTORE_SNAPSHOT | default "latest"}}'
-      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}"
+      SNAPSHOT_PATH: ".snaplet/snapshots/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}"
     requires:
       vars:
         - SNAPLET_BUCKET
         - SNAPSHOT_ENV
         - SNAPLET_TARGET_DB_NAME
     cmds:
-      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}} {{.SNAPSHOT_PATH}}
+      - aws s3 cp --quiet --sse=AES256 --recursive {{.SNAPLET_BUCKET}}/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}} {{.SNAPSHOT_PATH}}
       - printf "\n\n⬇ Snapshot downloaded to {{.SNAPSHOT_PATH}}\n\n"
 
   restore:
     desc: Restores the given RESTORE_SNAPSHOT to the SNAPLET_TARGET_DATABASE_URL database.
     silent: true
+    env:
+      SNAPLET_TARGET_DATABASE_URL: "{{.SNAPLET_TARGET_DATABASE_URL}}"
     vars:
       RESTORE_OPTIONS: '{{.RESTORE_OPTIONS | default ""}}'
       RESTORE_SNAPSHOT: '{{.RESTORE_SNAPSHOT | default "latest"}}'
-      SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}
+      SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}
     requires:
       vars:
         - SNAPLET_TARGET_DATABASE_URL
@@ -141,7 +143,7 @@ tasks:
     silent: true
     vars:
       RESTORE_SNAPSHOT: '{{.RESTORE_SNAPSHOT | default "latest"}}'
-      SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}
+      SNAPSHOT_PATH: .snaplet/snapshots/{{.SNAPLET_TARGET_DB_NAME}}/{{.SNAPSHOT_ENV}}/{{.RESTORE_SNAPSHOT}}
     requires:
       vars:
         - SNAPLET_TARGET_DATABASE_URL
