@@ -29,3 +29,5 @@ actions:
     - trunk-fmt-pre-commit
     - commitlint
     - trunk-upgrade-available
+ignore:
+  - CHANGELOG.md
