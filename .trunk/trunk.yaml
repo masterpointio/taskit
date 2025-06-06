@@ -16,6 +16,10 @@ lint:
     - markdownlint@0.45.0
     - prettier@3.5.3
     - trufflehog@3.88.35
+  ignore:
+    - linters: [ALL]
+      paths:
+        - CHANGELOG.md
 runtimes:
   enabled:
     - node@22.16.0
@@ -29,5 +33,3 @@ actions:
     - trunk-fmt-pre-commit
     - commitlint
     - trunk-upgrade-available
-ignore:
-  - CHANGELOG.md
