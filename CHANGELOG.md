@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/masterpointio/taskit/compare/v0.4.0...v0.5.0) (2025-06-13)
+
+
+### Features
+
+* add linter configs to the os sync task ([#26](https://github.com/masterpointio/taskit/issues/26)) ([6142651](https://github.com/masterpointio/taskit/commit/614265142a1a213bb1f2784cc7cc2ce77c43f503))
+
 ## [0.4.0](https://github.com/masterpointio/taskit/compare/v0.3.1...v0.4.0) (2025-06-04)
 
 ### Features
