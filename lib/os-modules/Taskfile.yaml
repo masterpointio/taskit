@@ -5,8 +5,8 @@ vars:
     terraform-aws-ssm-agent \
     terraform-aws-tailscale \
     terraform-datadog-users \
-    terraform-github-teams \
     terraform-github-organization \
+    terraform-github-teams \
     terraform-googleworkspace-users-groups-automation \
     terraform-postgres-config-dbs-users-roles \
     terraform-secrets-helper \
@@ -32,12 +32,16 @@ tasks:
     vars:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
       FILES: >-
-        .github
-        .trunk
+        .checkov.yaml
         .coderabbit.yaml
         .editorconfig
         .gitignore
+        .github
+        .markdownlint.yaml
         .terraform-docs.yaml
+        .tflint.hcl
+        .trunk
+        .yamllint.yaml
         LICENSE
         aqua.yaml
     cmds:
@@ -46,7 +50,7 @@ tasks:
         modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
         for module in $modules
         do
-          echo "Syncing files to ../$module..."
+          echo "Syncing files to ../$module ..."
           for file in {{.FILES}}
           do
             echo "  Syncing $file"
