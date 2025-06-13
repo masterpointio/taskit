@@ -2,7 +2,18 @@ version: "3"
 
 vars:
   DEFAULT_MODULES: |
-    terraform-googleworkspace-users-groups-automation
+    terraform-aws-ssm-agent \
+    terraform-aws-tailscale \
+    terraform-datadog-users \
+    terraform-github-organization \
+    terraform-github-teams \
+    terraform-googleworkspace-users-groups-automation \
+    terraform-postgres-config-dbs-users-roles \
+    terraform-secrets-helper \
+    terraform-spacelift-automation \
+    terraform-spacelift-aws-integrations \
+    terraform-spacelift-events-collector-audit-trail \
+    terraform-spacelift-policies
   SYNC_BRANCH: chore/sync-with-template
   SHARED_TMP_DIR: .tmp-template-sync
 tasks:
