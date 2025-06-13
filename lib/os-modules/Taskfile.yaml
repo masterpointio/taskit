@@ -2,18 +2,7 @@ version: "3"
 
 vars:
   DEFAULT_MODULES: |
-    terraform-aws-ssm-agent \
-    terraform-aws-tailscale \
-    terraform-datadog-users \
-    terraform-github-teams \
-    terraform-github-organization \
-    terraform-googleworkspace-users-groups-automation \
-    terraform-postgres-config-dbs-users-roles \
-    terraform-secrets-helper \
-    terraform-spacelift-automation \
-    terraform-spacelift-aws-integrations \
-    terraform-spacelift-events-collector-audit-trail \
-    terraform-spacelift-policies
+    terraform-googleworkspace-users-groups-automation
   SYNC_BRANCH: chore/sync-with-template
   SHARED_TMP_DIR: .tmp-template-sync
 tasks:
@@ -40,13 +29,17 @@ tasks:
         .terraform-docs.yaml
         LICENSE
         aqua.yaml
+        .tflint.hcl
+        .checkov.yaml
+        .yamllint.yaml
+        .markdownlint.yaml
     cmds:
       - |
         # Convert newlines to spaces and remove backslashes
         modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
         for module in $modules
         do
-          echo "Syncing files to ../$module..."
+          echo "Syncing files to ../$module ..."
           for file in {{.FILES}}
           do
             echo "  Syncing $file"
