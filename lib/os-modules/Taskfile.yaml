@@ -32,18 +32,18 @@ tasks:
     vars:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
       FILES: >-
-        .github
-        .trunk
+        .checkov.yaml
         .coderabbit.yaml
         .editorconfig
         .gitignore
+        .github
+        .markdownlint.yaml
         .terraform-docs.yaml
+        .tflint.hcl
+        .trunk
+        .yamllint.yaml
         LICENSE
         aqua.yaml
-        .tflint.hcl
-        .checkov.yaml
-        .yamllint.yaml
-        .markdownlint.yaml
     cmds:
       - |
         # Convert newlines to spaces and remove backslashes
