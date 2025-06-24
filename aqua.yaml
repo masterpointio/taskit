@@ -7,3 +7,5 @@ packages:
   - name: TomWright/dasel@v2.4.1
   - name: stedolan/jq@jq-1.7.1
     tags: [cursor]
+  - name: cli/cli@v2.74.2
+    tags: [gh]

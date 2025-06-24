@@ -6,7 +6,6 @@ vars:
     terraform-aws-tailscale \
     terraform-aws-identity-center-users \
     terraform-datadog-users \
-    terraform-github-organization \
     terraform-github-teams \
     terraform-googleworkspace-users-groups-automation \
     terraform-postgres-config-dbs-users-roles \
@@ -94,7 +93,15 @@ tasks:
 
           # If branch exists and delete option is turned off - skip creation
           if git branch --list "{{.SYNC_BRANCH}}" | grep -q "{{.SYNC_BRANCH}}" && [ "{{.DELETE_EXISTING_SYNC_BRANCH}}" = "false" ]; then
-            echo "⏭️  Branch {{.SYNC_BRANCH}} already exists, skipping creation."
+            echo "⏭️  Branch {{.SYNC_BRANCH}} already exists, checking it out."
+            git checkout {{.SYNC_BRANCH}}
+
+            # Check if local and remote branches have diverged
+            if git status --porcelain -b | grep -q "ahead\|behind\|diverged"; then
+              echo "⚠️  Local and remote branches have diverged. Resetting to remote branch..."
+              git fetch origin {{.SYNC_BRANCH}}
+              git reset --hard origin/{{.SYNC_BRANCH}}
+            fi
 
           # If branch exists and delete option is turned on - delete and create new branch
           elif git branch --list "{{.SYNC_BRANCH}}" | grep -q "{{.SYNC_BRANCH}}" && [ "{{.DELETE_EXISTING_SYNC_BRANCH}}" = "true" ]; then
@@ -131,11 +138,70 @@ tasks:
         do
           echo "🚀 Processing ../$module..."
           cd ../$module
+          echo "🔄 Checking out {{.SYNC_BRANCH}} branch..."
+          git checkout {{.SYNC_BRANCH}}
           echo "📝 Committing changes..."
           git add .
           git commit -m "chore: update with the latest template state"
           echo "⬆️ Pushing changes..."
           git push origin {{.SYNC_BRANCH}}
+          cd -
+        done
+
+  pr:
+    desc: |
+      Create pull requests for the changes pushed to SYNC_BRANCH.
+      Example: `task os:pr -- terraform-spacelift-automation`
+    summary: |
+      This will create pull requests from the SYNC_BRANCH to main for each of the specified
+      Terraform module repositories using GitHub CLI.
+      To create PRs for specific repositories, pass their names as arguments:
+      `task os:pr -- terraform-custom-module`
+      or for multiple modules: `task os:pr -- "terraform-custom-module terraform-another-module"`
+
+    vars:
+      MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+      PR_TITLE: "chore: sync with latest template state"
+      PR_BODY: |
+        This PR syncs the repository with the latest state from `terraform-module-template`.
+
+        **Changes include:**
+        - Updated configuration files (.checkov.yaml, .markdownlint.yaml, etc.)
+        - Updated GitHub workflows and templates
+        - Updated linting and formatting configurations
+        - Updated documentation templates
+
+    cmds:
+      - |
+        # Convert newlines to spaces and remove backslashes
+        modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
+        for module in $modules
+        do
+          echo "🚀 Creating PR for ../$module..."
+          cd ../$module
+
+          current_branch=$(git branch --show-current)
+          if [ "$current_branch" != "{{.SYNC_BRANCH}}" ]; then
+            echo "⚠️  Warning: Not on {{.SYNC_BRANCH}} branch. Current branch: $current_branch"
+            echo "🔄 Checking out {{.SYNC_BRANCH}}..."
+            git checkout {{.SYNC_BRANCH}}
+          fi
+
+          commits_ahead=$(git rev-list --count main..{{.SYNC_BRANCH}})
+          if [ "$commits_ahead" -eq 0 ]; then
+            echo "⏭️  No commits ahead of main, skipping PR creation for $module"
+            cd -
+            continue
+          fi
+
+          echo "📋 Creating pull request..."
+          gh pr create \
+            --title "{{.PR_TITLE}}" \
+            --body "{{.PR_BODY}}" \
+            --base main \
+            --head {{.SYNC_BRANCH}} \
+            --repo "masterpointio/$module"
+
           cd -
         done
 
@@ -171,3 +237,26 @@ tasks:
       - task: pull-and-branch
       - task: sync
       - task: cleanup-template
+
+  sync-and-pr:
+    desc: |
+      Complete workflow: sync with template, push changes, and create pull requests.
+      Example: `task os:sync-and-pr -- terraform-spacelift-automation`
+    summary: |
+      This will:
+      1. Pull the main branch and create a new branch named 'chore/sync-with-template'
+      2. Sync files from the template repository
+      3. Commit and push changes
+      4. Create pull requests for the changes
+      for each of the default Terraform module repositories listed in DEFAULT_MODULES.
+      To sync to a specific repository (or a custom list of repositories), pass their names as arguments:
+      `task os:sync-and-pr -- terraform-custom-module`
+      or for multiple modules: `task os:sync-and-pr -- "terraform-custom-module terraform-another-module"`
+
+    vars:
+      MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
+      DELETE_EXISTING_SYNC_BRANCH: "{{.DELETE_EXISTING_SYNC_BRANCH | default false}}"
+    cmds:
+      - task: sync-all
+      - task: push
+      - task: pr
