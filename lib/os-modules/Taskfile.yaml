@@ -4,6 +4,7 @@ vars:
   DEFAULT_MODULES: |
     terraform-aws-ssm-agent \
     terraform-aws-tailscale \
+    terraform-aws-identity-center-users \
     terraform-datadog-users \
     terraform-github-organization \
     terraform-github-teams \
