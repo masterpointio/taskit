@@ -14,9 +14,33 @@ vars:
     terraform-spacelift-aws-integrations \
     terraform-spacelift-events-collector-audit-trail \
     terraform-spacelift-policies
+
+  # Configuration constants
   SYNC_BRANCH: chore/sync-with-template
   SHARED_TMP_DIR: .tmp-template-sync
+  TEMPLATE_REPO: https://github.com/masterpointio/terraform-module-template.git
+  TEMPLATE_OWNER: masterpointio
+  SYNC_MESSAGE: "chore: sync with latest template state"
+
+  # Files to synchronize
+  SYNC_FILES: >-
+    .checkov.yaml
+    .coderabbit.yaml
+    .editorconfig
+    .gitignore
+    .github
+    .markdownlint.yaml
+    .terraform-docs.yaml
+    .tflint.hcl
+    .trunk
+    .yamllint.yaml
+    LICENSE
+    aqua.yaml
 tasks:
+  # ============================================================================
+  # File Synchronization Tasks
+  # ============================================================================
+
   sync:
     desc: |
       Sync files from `terraform-module-template` to specified Terraform open-source module repos.
@@ -31,19 +55,6 @@ tasks:
 
     vars:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
-      FILES: >-
-        .checkov.yaml
-        .coderabbit.yaml
-        .editorconfig
-        .gitignore
-        .github
-        .markdownlint.yaml
-        .terraform-docs.yaml
-        .tflint.hcl
-        .trunk
-        .yamllint.yaml
-        LICENSE
-        aqua.yaml
     cmds:
       - |
         # Convert newlines to spaces and remove backslashes
@@ -51,12 +62,16 @@ tasks:
         for module in $modules
         do
           echo "Syncing files to ../$module ..."
-          for file in {{.FILES}}
+          for file in {{.SYNC_FILES}}
           do
             echo "  Syncing $file"
             rsync -av --delete {{.SHARED_TMP_DIR}}/$file ../$module/
           done
         done
+
+  # ============================================================================
+  # Git Branch Management Tasks
+  # ============================================================================
 
   pull-and-branch:
     desc: |
@@ -81,7 +96,7 @@ tasks:
           echo -e "\n\n🚀 Processing ---------------- $module \n"
           if [ ! -d ../$module ]; then
             echo "🧲 Cloning repository..."
-            git clone "git@github.com:masterpointio/$module.git" ../$module
+            git clone "git@github.com:{{.TEMPLATE_OWNER}}/$module.git" ../$module
           fi
           cd ../$module
 
@@ -117,6 +132,10 @@ tasks:
           cd -
         done
 
+  # ============================================================================
+  # Commit and Push Tasks
+  # ============================================================================
+
   push:
     desc: |
       Commit and push changes with the specified commit message.
@@ -140,13 +159,24 @@ tasks:
           cd ../$module
           echo "🔄 Checking out {{.SYNC_BRANCH}} branch..."
           git checkout {{.SYNC_BRANCH}}
-          echo "📝 Committing changes..."
+          echo "📝 Staging changes..."
           git add .
-          git commit -m "chore: update with the latest template state"
-          echo "⬆️ Pushing changes..."
-          git push origin {{.SYNC_BRANCH}}
+
+          # Check if there are any changes to commit
+          if git diff --staged --quiet; then
+            echo "⚠️  No changes to commit in $module, skipping..."
+          else
+            echo "📝 Committing changes..."
+            git commit -m "{{.SYNC_MESSAGE}}"
+            echo "⬆️ Pushing changes..."
+            git push origin {{.SYNC_BRANCH}}
+          fi
           cd -
         done
+
+  # ============================================================================
+  # Pull Request Management Tasks
+  # ============================================================================
 
   pr:
     desc: |
@@ -161,18 +191,24 @@ tasks:
 
     vars:
       MODULES: "{{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}{{.DEFAULT_MODULES}}{{end}}"
-      PR_TITLE: "chore: sync with latest template state"
-      PR_BODY: |
-        This PR syncs the repository with the latest state from `terraform-module-template`.
-
-        **Changes include:**
-        - Updated configuration files (.checkov.yaml, .markdownlint.yaml, etc.)
-        - Updated GitHub workflows and templates
-        - Updated linting and formatting configurations
-        - Updated documentation templates
-
     cmds:
       - |
+        # Get the latest commit SHA from terraform-module-template
+        echo "🔍 Fetching latest commit SHA from terraform-module-template..."
+        template_sha=$(git ls-remote {{.TEMPLATE_REPO}} HEAD | cut -f1)
+        template_short_sha=$(echo $template_sha | cut -c1-7)
+
+        # Try to get the latest tag from terraform-module-template
+        echo "🏷️  Fetching latest tag from terraform-module-template..."
+        template_tag=$(git ls-remote --tags --sort=-version:refname {{.TEMPLATE_REPO}} | head -n1 | sed 's/.*refs\/tags\///' | sed 's/\^{}//')
+
+        # If no tag found, use "no tags"
+        if [ -z "$template_tag" ]; then
+          template_tag="no tags"
+        fi
+
+        echo "📝 Template info: Tag: $template_tag, SHA: $template_short_sha"
+
         # Convert newlines to spaces and remove backslashes
         modules=$(echo "{{.MODULES}}" | tr '\n' ' ' | sed 's/\\//g')
         for module in $modules
@@ -187,6 +223,7 @@ tasks:
             git checkout {{.SYNC_BRANCH}}
           fi
 
+          # Check if there are commits ahead of main
           commits_ahead=$(git rev-list --count main..{{.SYNC_BRANCH}})
           if [ "$commits_ahead" -eq 0 ]; then
             echo "⏭️  No commits ahead of main, skipping PR creation for $module"
@@ -194,27 +231,63 @@ tasks:
             continue
           fi
 
+          # Ensure remote branch exists
+          if ! git ls-remote --heads origin {{.SYNC_BRANCH}} | grep -q {{.SYNC_BRANCH}}; then
+            echo "📤 Remote branch doesn't exist, pushing {{.SYNC_BRANCH}} to origin..."
+            git push origin {{.SYNC_BRANCH}}
+          fi
+
+          # Check if PR already exists
+          existing_pr=$(gh pr list --head {{.SYNC_BRANCH}} --base main --json number --jq '.[0].number' 2>/dev/null || echo "")
+          if [ -n "$existing_pr" ]; then
+            echo "📋 PR already exists (#$existing_pr), skipping PR creation for $module"
+            cd -
+            continue
+          fi
+
+          # Create PR body with template version info
           echo "📋 Creating pull request..."
+
+          # Create PR body using printf to properly handle multi-line formatting
+          pr_body=$(printf "%s\n\n%s\n%s\n%s\n\n%s\n%s\n%s\n%s\n%s" \
+            "This PR syncs the repository with the latest state from [terraform-module-template]({{.TEMPLATE_REPO}})." \
+            "**Template Version:**" \
+            "- **Tag:** [$template_tag]({{.TEMPLATE_REPO}}/releases/tag/$template_tag)" \
+            "- **Commit SHA:** $template_short_sha" \
+            "**Changes include:**" \
+            "- Updated configuration files (.checkov.yaml, .markdownlint.yaml, etc.)" \
+            "- Updated GitHub workflows and templates" \
+            "- Updated linting and formatting configurations" \
+            "- Updated documentation templates")
+
           gh pr create \
-            --title "{{.PR_TITLE}}" \
-            --body "{{.PR_BODY}}" \
+            --title "{{.SYNC_MESSAGE}}" \
+            --body "$pr_body" \
             --base main \
             --head {{.SYNC_BRANCH}} \
-            --repo "masterpointio/$module"
+            --repo "{{.TEMPLATE_OWNER}}/$module"
 
           cd -
         done
+
+  # ============================================================================
+  # Template Management Tasks
+  # ============================================================================
 
   setup-template:
     desc: Set up the template repository in a shared temporary directory
     cmds:
       - task: cleanup-template
-      - git clone --depth 1 https://github.com/masterpointio/terraform-module-template.git {{.SHARED_TMP_DIR}}
+      - git clone --depth 1 {{.TEMPLATE_REPO}} {{.SHARED_TMP_DIR}}
 
   cleanup-template:
     desc: Clean up the shared temporary directory
     cmds:
       - rm -rf {{.SHARED_TMP_DIR}}
+
+  # ============================================================================
+  # Composite Workflow Tasks
+  # ============================================================================
 
   sync-all:
     desc: |

@@ -4,3 +4,4 @@
 # Therefore, configs specific to their coding practices are their responsibilty to judiciously manage.
 .claude/*
 
+.tmp-template-sync/
