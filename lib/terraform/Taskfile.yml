@@ -74,3 +74,20 @@ tasks:
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
       - terraform apply -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
+
+  refresh:
+    desc: Refresh the Terraform state to match the real-world infrastructure.
+    summary: |
+      Refreshes the Terraform state for a specified environment, using a file to load the variables.
+      The `terraform refresh` arguments can be optionally passed in.
+      Requires a variables file specific to the environment to be present.
+      Usage: task terraform:refresh -- ENVIRONMENT [tofu refresh arguments]
+      Example: terraform tofu:refresh -- automation
+    dir: "{{.USER_WORKING_DIR}}"
+    silent: true
+    vars: *vars
+    preconditions:
+      - sh: test -f {{.TFVARS_FILE}}
+        msg: "Variables file does not exist: {{.TFVARS_FILE}}"
+    cmds:
+      - terraform refresh -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
