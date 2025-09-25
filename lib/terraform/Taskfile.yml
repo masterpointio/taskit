@@ -76,7 +76,6 @@ tasks:
       - terraform apply -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
 
   refresh:
-  refresh:
     desc: Refresh the Terraform state to match the real-world infrastructure (safer via apply -refresh-only).
     summary: |
       Refreshes the Terraform state for a specified environment, using a file to load the variables.
