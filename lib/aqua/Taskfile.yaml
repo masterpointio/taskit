@@ -11,11 +11,11 @@ tasks:
 
       Provide a version to install with the AQUA_INSTALLER_VERSION variable.
       example:
-      > task aqua:install AQUA_INSTALLER_VERSION=v2.1.1
+      > task aqua:install AQUA_INSTALLER_VERSION=v4.0.3
 
     silent: true
     vars:
-      AQUA_INSTALLER_VERSION: v2.1.2
+      AQUA_INSTALLER_VERSION: v4.0.3
     cmds:
       - defer: rm ./aqua-installer
       - |
