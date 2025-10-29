@@ -56,6 +56,7 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
+      - terraform workspace select {{.ENV}} || terraform workspace create {{.ENV}}
       - terraform plan -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
 
   apply:
@@ -73,6 +74,7 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
+      - terraform workspace select {{.ENV}} || terraform workspace create {{.ENV}}
       - terraform apply -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
 
   refresh:
@@ -90,4 +92,5 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
+      - terraform workspace select {{.ENV}} || terraform workspace create {{.ENV}}
       - terraform apply -refresh-only -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
