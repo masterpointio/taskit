@@ -16,14 +16,14 @@ tasks:
     silent: true
     internal: true
     vars: &vars
-      ENV:
+      WORKSPACE:
         sh: echo "{{.CLI_ARGS}}" | cut -d ' ' -f1 | xargs
       TF_ARGS:
         sh: echo "{{.CLI_ARGS}}" | cut -s -d ' ' -f2- | xargs
       BACKEND_CONFIG_FILE:
-        sh: echo "{{.BACKEND_CONFIG_PATH}}/{{.ENV}}.backend.tf"
+        sh: echo "{{.BACKEND_CONFIG_PATH}}/{{.WORKSPACE}}.backend.tf"
       TFVARS_FILE:
-        sh: echo "{{.TFVARS_PATH}}/{{.ENV}}.tfvars"
+        sh: echo "{{.TFVARS_PATH}}/{{.WORKSPACE}}.tfvars"
 
   init:
     desc: Initialize Terraform working directory with a backend configuration file.
@@ -56,7 +56,7 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - terraform workspace select -or-create {{.ENV}}
+      - terraform workspace select -or-create {{.WORKSPACE}}
       - terraform plan -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
 
   apply:
@@ -74,7 +74,7 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - terraform workspace select -or-create {{.ENV}}
+      - terraform workspace select -or-create {{.WORKSPACE}}
       - terraform apply -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
 
   refresh:
@@ -92,5 +92,5 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - terraform workspace select -or-create {{.ENV}}
+      - terraform workspace select -or-create {{.WORKSPACE}}
       - terraform apply -refresh-only -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}
