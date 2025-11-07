@@ -16,14 +16,14 @@ tasks:
     silent: true
     internal: true
     vars: &vars
-      ENV:
+      WORKSPACE:
         sh: echo "{{.CLI_ARGS}}" | cut -d ' ' -f1 | xargs
       TF_ARGS:
         sh: echo "{{.CLI_ARGS}}" | cut -s -d ' ' -f2- | xargs
       BACKEND_CONFIG_FILE:
-        sh: echo "{{.BACKEND_CONFIG_PATH}}/{{.ENV}}.backend.tf"
+        sh: echo "{{.BACKEND_CONFIG_PATH}}/{{.WORKSPACE}}.backend.tf"
       TFVARS_FILE:
-        sh: echo "{{.TFVARS_PATH}}/{{.ENV}}.tfvars"
+        sh: echo "{{.TFVARS_PATH}}/{{.WORKSPACE}}.tfvars"
       TF_CMD:
         sh: '[ "${USE_TERRAFORM}" = "true" ] && echo "terraform" || echo "tofu"'
 
@@ -58,6 +58,7 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
+      - "{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}"
       - "{{.TF_CMD}} plan -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}"
 
   apply:
@@ -75,6 +76,7 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
+      - "{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}"
       - "{{.TF_CMD}} apply -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}"
 
   refresh:
@@ -92,4 +94,5 @@ tasks:
       - sh: test -f {{.TFVARS_FILE}}
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
+      - "{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}"
       - "{{.TF_CMD}} apply -refresh-only -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}"
