@@ -9,3 +9,5 @@ packages:
     tags: [cursor]
   - name: cli/cli@v2.83.0
     tags: [gh]
+  - name: bats-core/bats-core@v1.13.0
+    tags: [cicd]
