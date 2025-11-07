@@ -4,13 +4,11 @@ includes:
   aqua: lib/aqua
   aws: lib/aws
   components: lib/components
-  cursor: lib/cursor
   mixins: lib/mixins
   os: lib/os-modules
   snaplet: lib/snaplet
-  terraform:
-    taskfile: lib/terraform
-    aliases: [tf]
+  tf:
+    taskfile: lib/tf
   toolbox: lib/toolbox
 
 tasks: {}
