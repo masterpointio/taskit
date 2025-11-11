@@ -1,9 +1,5 @@
 version: "3"
 
-vars:
-  BACKEND_CONFIG_PATH: '{{.BACKEND_CONFIG_PATH | default "./backend-configurations"}}'
-  TFVARS_PATH: '{{.TFVARS_PATH | default "./tfvars"}}'
-
 tasks:
   setup:
     desc: Internal task to templatize the variables for the other tasks.
@@ -13,44 +9,45 @@ tasks:
         `.CLI_ARGS` is not yet available, that's why we have to duplicate the variables for every task.
       2. Taskfile commands run in their own shell environments, so if you set an environment variable in one task,
         it won't persist after that task completes or be available in other tasks.
+      3. The `TF_CMD` variable dynamically selects between Terraform and OpenTofu based on the `USE_TERRAFORM`
+        environment variable (set to "true" for Terraform, otherwise defaults to OpenTofu).
+      4. Tasks execute in `{{.USER_WORKING_DIR}}`, which should be provided by the including Taskfile.
     silent: true
     internal: true
     vars: &vars
       WORKSPACE:
         sh: echo "{{.CLI_ARGS}}" | cut -d ' ' -f1 | xargs
+      TFVARS_PATH:
+        sh: echo "{{.TFVARS_PATH | default "./tfvars"}}"
       TF_ARGS:
         sh: echo "{{.CLI_ARGS}}" | cut -s -d ' ' -f2- | xargs
-      BACKEND_CONFIG_FILE:
-        sh: echo "{{.BACKEND_CONFIG_PATH}}/{{.WORKSPACE}}.backend.tf"
       TFVARS_FILE:
         sh: echo "{{.TFVARS_PATH}}/{{.WORKSPACE}}.tfvars"
       TF_CMD:
         sh: '[ "${USE_TERRAFORM}" = "true" ] && echo "terraform" || echo "tofu"'
 
   init:
-    desc: Initialize Terraform working directory with a backend configuration file.
+    desc: Initialize Terraform or OpenTofu working directory.
     summary: |
-      Initializes Terraform directory using the backend config file for the specified environment.
-      The `terraform init` arguments can be optionally passed in.
-      Usage: task terraform:init -- ENVIRONMENT [terraform init arguments]
-      Example: task terraform:init -- automation
+      Initializes a Terraform or OpenTofu directory (selected via USE_TERRAFORM environment variable).
+      The `terraform init` or `tofu init` arguments can be optionally passed in.
+      Usage: task tf:init -- [optional init arguments]
+      Example: task tf:init --
     dir: "{{.USER_WORKING_DIR}}"
     silent: true
     vars: *vars
-    preconditions:
-      - sh: test -f {{.BACKEND_CONFIG_FILE}}
-        msg: "Backend configuration file does not exist: {{.BACKEND_CONFIG_FILE}}"
     cmds:
-      - "{{.TF_CMD}} init -backend-config {{.BACKEND_CONFIG_FILE}} {{.TF_ARGS}}"
+      - "{{.TF_CMD}} init {{.TF_ARGS}}"
 
   plan:
-    desc: Generate a Terraform execution plan Terraform loading variable values from the given file.
+    desc: Generate a Terraform or OpenTofu execution plan, loading variable values from the given file.
     summary: |
-      Generates a Terraform execution plan for a specified environment, using a file to load the variables.
-      The `terraform plan` arguments can be optionally passed in.
+      Generates a Terraform or OpenTofu execution plan for a specified environment, using a file to load the variables.
+      The tool (Terraform or OpenTofu) is selected via the USE_TERRAFORM environment variable.
+      The `terraform plan` or `tofu plan` arguments can be optionally passed in.
       Requires a variables file specific to the environment to be present.
-      Usage: task terraform:plan -- ENVIRONMENT [terraform plan arguments]
-      Example: task terraform:plan -- automation
+      Usage: task tf:plan -- ENVIRONMENT [terraform/tofu plan arguments]
+      Example: task tf:plan -- automation
     dir: "{{.USER_WORKING_DIR}}"
     silent: true
     vars: *vars
@@ -62,13 +59,14 @@ tasks:
       - "{{.TF_CMD}} plan -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}"
 
   apply:
-    desc: Create or update infrastructure according to Terraform configuration files in the current directory.
+    desc: Create or update infrastructure according to Terraform or OpenTofu configuration files in the current directory.
     summary: |
-      Applies a Terraform execution plan for a specific environment, using a file to load the variables.
-      The `terraform apply` arguments can be optionally passed in.
+      Applies a Terraform or OpenTofu execution plan for a specific environment, using a file to load the variables.
+      The tool (Terraform or OpenTofu) is selected via the USE_TERRAFORM environment variable.
+      The `terraform apply` or `tofu apply` arguments can be optionally passed in.
       Requires a variables file specific to the environment to be present.
-      Usage: task terraform:apply -- ENVIRONMENT [terraform apply arguments]
-      Example: task terraform:apply -- automation
+      Usage: task tf:apply -- ENVIRONMENT [terraform/tofu apply arguments]
+      Example: task tf:apply -- automation
     dir: "{{.USER_WORKING_DIR}}"
     silent: true
     vars: *vars
@@ -80,13 +78,14 @@ tasks:
       - "{{.TF_CMD}} apply -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}"
 
   refresh:
-    desc: Refresh the Terraform state to match the real-world infrastructure (safer via apply -refresh-only).
+    desc: Refresh the Terraform or OpenTofu state to match the real-world infrastructure (safer via apply -refresh-only).
     summary: |
-      Refreshes the Terraform state for a specified environment, using a file to load the variables.
-      Note: Upstream deprecates `terraform refresh`; use `terraform apply -refresh-only` to review changes before writing state.
+      Refreshes the Terraform or OpenTofu state for a specified environment, using a file to load the variables.
+      The tool (Terraform or OpenTofu) is selected via the USE_TERRAFORM environment variable.
+      Note: Upstream deprecates `terraform refresh`; use `terraform apply -refresh-only` or `tofu apply -refresh-only` to review changes before writing state.
       Requires a variables file specific to the environment to be present.
-      Usage: task terraform:refresh -- ENVIRONMENT [terraform apply -refresh-only arguments]
-      Example: task terraform:refresh -- automation
+      Usage: task tf:refresh -- ENVIRONMENT [terraform/tofu apply -refresh-only arguments]
+      Example: task tf:refresh -- automation
     dir: "{{.USER_WORKING_DIR}}"
     silent: true
     vars: *vars
