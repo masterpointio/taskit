@@ -1,9 +1,5 @@
 version: "3"
 
-vars:
-  BACKEND_CONFIG_PATH: '{{.BACKEND_CONFIG_PATH | default "./backend-configurations"}}'
-  TFVARS_PATH: '{{.TFVARS_PATH | default "./tfvars"}}'
-
 tasks:
   setup:
     desc: Internal task to templatize the variables for the other tasks.
@@ -18,6 +14,8 @@ tasks:
     vars: &vars
       WORKSPACE:
         sh: echo "{{.CLI_ARGS}}" | cut -d ' ' -f1 | xargs
+      TFVARS_PATH:
+        sh: echo "{{.TFVARS_PATH | default "./tfvars"}}"
       TF_ARGS:
         sh: echo "{{.CLI_ARGS}}" | cut -s -d ' ' -f2- | xargs
       BACKEND_CONFIG_FILE:
@@ -28,20 +26,17 @@ tasks:
         sh: '[ "${USE_TERRAFORM}" = "true" ] && echo "terraform" || echo "tofu"'
 
   init:
-    desc: Initialize Terraform working directory with a backend configuration file.
+    desc: Initialize Terraform working directory.
     summary: |
-      Initializes Terraform directory using the backend config file for the specified environment.
-      The `terraform init` arguments can be optionally passed in.
-      Usage: task terraform:init -- ENVIRONMENT [terraform init arguments]
-      Example: task terraform:init -- automation
+      Initializes Terraform directory.
+      The `terraform or tofu init` arguments can be optionally passed in.
+      Usage: task terraform:init -- [optional TF init arguments]
+      Example: task tf:init --
     dir: "{{.USER_WORKING_DIR}}"
     silent: true
     vars: *vars
-    preconditions:
-      - sh: test -f {{.BACKEND_CONFIG_FILE}}
-        msg: "Backend configuration file does not exist: {{.BACKEND_CONFIG_FILE}}"
     cmds:
-      - "{{.TF_CMD}} init -backend-config {{.BACKEND_CONFIG_FILE}} {{.TF_ARGS}}"
+      - "{{.TF_CMD}} init {{.TF_ARGS}}"
 
   plan:
     desc: Generate a Terraform execution plan Terraform loading variable values from the given file.
