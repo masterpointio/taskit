@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.5.0](https://github.com/masterpointio/taskit/compare/v0.4.0...v0.5.0) (2025-11-11)
+
+
+### Features
+
+* add linter configs to the os sync task ([#26](https://github.com/masterpointio/taskit/issues/26)) ([6142651](https://github.com/masterpointio/taskit/commit/614265142a1a213bb1f2784cc7cc2ce77c43f503))
+* add terraform refresh command ([#33](https://github.com/masterpointio/taskit/issues/33)) ([2bb2893](https://github.com/masterpointio/taskit/commit/2bb289389c694d9fef4dac2f578fe5dc8e9d5fda))
+* add workspace selection ([#35](https://github.com/masterpointio/taskit/issues/35)) ([ac8f80c](https://github.com/masterpointio/taskit/commit/ac8f80c70cdfdecf5323fb8e48d4c0d6faadbbd0))
+* **pruning:** remove cursor specific task commands. ([#37](https://github.com/masterpointio/taskit/issues/37)) ([8c908c2](https://github.com/masterpointio/taskit/commit/8c908c21b565c338824306130ebf666780fcd934))
+* **tf:** default to tofu and allow switching back to terraform ([#38](https://github.com/masterpointio/taskit/issues/38)) ([71d42fe](https://github.com/masterpointio/taskit/commit/71d42fec339844ad96c1c779df60eb994990e021))
+* **tf:** update the tf:init command to work for TF dynamic backends ([#40](https://github.com/masterpointio/taskit/issues/40)) ([0706965](https://github.com/masterpointio/taskit/commit/0706965deceda7baff291ecf0da401b48b0b88f6))
+
+
+### Bug Fixes
+
+* **aqua:** update installer version to pull in checksum fix ([#34](https://github.com/masterpointio/taskit/issues/34)) ([b47b0ef](https://github.com/masterpointio/taskit/commit/b47b0efe62205bc91f2157e18edca3b411a361f2))
+
 ## [0.4.0](https://github.com/masterpointio/taskit/compare/v0.3.1...v0.4.0) (2025-06-04)
 
 ### Features
