@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/masterpointio/taskit/compare/v0.5.0...v0.5.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* pin GitHub Actions to commit SHAs (INT-326) ([#45](https://github.com/masterpointio/taskit/issues/45)) ([953d140](https://github.com/masterpointio/taskit/commit/953d1404c744b4d236c357a98437a27a498556c8))
+
 ## [0.5.0](https://github.com/masterpointio/taskit/compare/v0.4.0...v0.5.0) (2025-11-11)
 
 
