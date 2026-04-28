@@ -25,6 +25,8 @@ tasks:
         sh: echo "{{.TFVARS_PATH}}/{{.WORKSPACE}}.tfvars"
       TF_CMD:
         sh: '[ "${USE_TERRAFORM}" = "true" ] && echo "terraform" || echo "tofu"'
+      TF_BACKEND_ROLE_ARN:
+        sh: echo "${TF_BACKEND_ROLE_ARN:-}"        
 
   init:
     desc: Initialize Terraform or OpenTofu working directory.
@@ -37,7 +39,7 @@ tasks:
     silent: true
     vars: *vars
     cmds:
-      - "{{.TF_CMD}} init {{.TF_ARGS}}"
+      - "{{.TF_CMD}} init -backend-config=\"role_arn={{.TF_BACKEND_ROLE_ARN}}\" {{.TF_ARGS}}"
 
   plan:
     desc: Generate a Terraform or OpenTofu execution plan, loading variable values from the given file.
