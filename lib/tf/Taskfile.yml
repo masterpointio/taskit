@@ -66,8 +66,8 @@ tasks:
       - sh: '[ -z "{{.WORKSPACE}}" ] || test -f {{.TFVARS_FILE}}'
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - '{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}'
-      - '{{.TF_CMD}} plan {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}'
+      - "{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}"
+      - "{{.TF_CMD}} plan {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}"
 
   apply:
     desc: Create or update infrastructure according to Terraform or OpenTofu configuration files in the current directory.
@@ -87,8 +87,8 @@ tasks:
       - sh: '[ -z "{{.WORKSPACE}}" ] || test -f {{.TFVARS_FILE}}'
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - '{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}'
-      - '{{.TF_CMD}} apply {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}'
+      - "{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}"
+      - "{{.TF_CMD}} apply {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}"
 
   refresh:
     desc: Refresh the Terraform or OpenTofu state to match the real-world infrastructure (safer via apply -refresh-only).
@@ -108,5 +108,5 @@ tasks:
       - sh: '[ -z "{{.WORKSPACE}}" ] || test -f {{.TFVARS_FILE}}'
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - '{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}'
-      - '{{.TF_CMD}} apply -refresh-only {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}'
+      - "{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}"
+      - "{{.TF_CMD}} apply -refresh-only {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}"
