@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.6.0](https://github.com/masterpointio/taskit/compare/v0.5.0...v0.6.0) (2026-05-17)
+
+
+### Features
+
+* allow backend role arn to init (AIR-1495) ([#48](https://github.com/masterpointio/taskit/issues/48)) ([80fb117](https://github.com/masterpointio/taskit/commit/80fb117cf32fc8c0e89e61206e70dc0415306ea0))
+* support default workspace in tf plan/apply/refresh ([#49](https://github.com/masterpointio/taskit/issues/49)) ([1b38f29](https://github.com/masterpointio/taskit/commit/1b38f29077f24d41eb3c66f55463d172b84483f1))
+
+
+### Bug Fixes
+
+* pin GitHub Actions to commit SHAs (INT-326) ([#45](https://github.com/masterpointio/taskit/issues/45)) ([953d140](https://github.com/masterpointio/taskit/commit/953d1404c744b4d236c357a98437a27a498556c8))
+
 ## [0.5.0](https://github.com/masterpointio/taskit/compare/v0.4.0...v0.5.0) (2025-11-11)
 
 
