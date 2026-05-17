@@ -19,8 +19,6 @@ tasks:
     preconditions:
       - sh: test -f ./mixins/{{.CLI_ARGS}}
         msg: "File does not exist: ./mixins/{{.CLI_ARGS}}"
-      - sh: test -d ./components
-        msg: ./components/ directory does not exist.
     sources:
       - ./mixins/{{.CLI_ARGS}}
     cmds:
