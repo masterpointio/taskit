@@ -2,21 +2,32 @@ version: "3"
 
 tasks:
   update-all:
-    desc: "Update a mixin across the components. Example: `task mixins:update-all -- context.tf`."
+    # Updates (by overwriting) every existing copy of the named mixin under
+    # ./components/ with the current ./mixins/<file> template.
+    #
+    # Directories opt in to a mixin by having a copy of it on disk; this task only
+    # touches directories that already contain <file>. It does NOT add the mixin
+    # to directories that don't already have it — adopt a mixin in a new component
+    # by copying it in manually first as it needs to be an explicit choice, then
+    # future `update-all` runs will keep it in sync.
+    #
+    # `.terraform/` and `.terragrunt-cache/` are pruned so we don't overwrite the
+    # mixin inside vendored child-module copies that Terraform/Terragrunt drop on
+    # disk during init.
+    desc: "Update (by overwriting) every existing copy of a mixin under ./components/ with the current template. Does not add the mixin to directories that don't already have it. Example: `task mixins:update-all -- context.tf`."
+    dir: "{{.USER_WORKING_DIR}}"
     preconditions:
       - sh: test -f ./mixins/{{.CLI_ARGS}}
         msg: "File does not exist: ./mixins/{{.CLI_ARGS}}"
-      - sh: test -d ./components && [ "$(ls -A ./components)" ]
-        msg: ./components/ directory is empty or does not exist.
+      - sh: test -d ./components
+        msg: ./components/ directory does not exist.
     sources:
       - ./mixins/{{.CLI_ARGS}}
-    generates:
-      - ./components/*/{{.CLI_ARGS}}
     cmds:
       - cmd: |
-          for comp in ./components/*; do
-            cp -v ./mixins/{{.CLI_ARGS}}  $comp/{{.CLI_ARGS}}
-          done;
+          find ./components -type d \( -name .terraform -o -name .terragrunt-cache \) -prune -o -type f -name {{.CLI_ARGS}} -print | while IFS= read -r dest; do
+            cp -v ./mixins/{{.CLI_ARGS}} "$dest"
+          done
         silent: true
 
   pull-sops:
