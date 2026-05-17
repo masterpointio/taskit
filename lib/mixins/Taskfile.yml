@@ -3,8 +3,8 @@ version: "3"
 tasks:
   update-all:
     # Updates (by overwriting) every existing copy of the named mixin found
-    # recursively under the user's working directory with the current
-    # ./mixins/<file> template.
+    # recursively under the user's current directory with the current
+    # <repo>/mixins/<file> template.
     #
     # Directories opt in to a mixin by having a copy of it on disk; this task only
     # touches files that already exist. It does NOT add the mixin to directories
@@ -19,18 +19,26 @@ tasks:
     # are pruned so we don't overwrite the mixin inside vendored child-module
     # copies that Terraform/Terragrunt drop on disk during init, and we don't
     # try to copy the source mixin onto itself.
-    desc: "Update (by overwriting) every existing copy of a mixin found recursively under the current directory with the current template. Picks up every consumer in the repo (root modules, in-repo child modules, etc.). Does not add the mixin to directories that don't already have it. Example: `task mixins:update-all -- context.tf`."
+    desc: "Update (by overwriting) every existing copy of a mixin found recursively under the current directory with the current template. Picks up every consumer in the subtree. Does not add the mixin to directories that don't already have it. Example: `task mixins:update-all -- context.tf`."
     dir: "{{.USER_WORKING_DIR}}"
+    vars:
+      REPO_ROOT:
+        sh: git rev-parse --show-toplevel
+      MIXIN_SRC: "{{.REPO_ROOT}}/mixins/{{.CLI_ARGS}}"
     preconditions:
-      - sh: test -f ./mixins/{{.CLI_ARGS}}
-        msg: "File does not exist: ./mixins/{{.CLI_ARGS}}"
+      - sh: test -f {{.MIXIN_SRC}}
+        msg: "File does not exist: {{.MIXIN_SRC}}"
     sources:
-      - ./mixins/{{.CLI_ARGS}}
+      - "{{.MIXIN_SRC}}"
     cmds:
       - cmd: |
-          find . \( -type d \( -name .terraform -o -name .terragrunt-cache \) -o -path ./mixins \) -prune -o -type f -name {{.CLI_ARGS}} -print | while IFS= read -r dest; do
-            cp -v ./mixins/{{.CLI_ARGS}} "$dest"
-          done
+          find . \
+            \( -type d \( -name .terraform -o -name .terragrunt-cache \) \
+               -o -path ./mixins \) -prune \
+            -o -type f -name {{.CLI_ARGS}} -print \
+          | while IFS= read -r dest; do
+              cp -v {{.MIXIN_SRC}} "$dest"
+            done
         silent: true
 
   pull-sops:
