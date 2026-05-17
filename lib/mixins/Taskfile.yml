@@ -9,8 +9,7 @@ tasks:
     # Directories opt in to a mixin by having a copy of it on disk; this task only
     # touches files that already exist. It does NOT add the mixin to directories
     # that don't already have it — adopt a mixin in a new place by copying it in
-    # manually first as it needs to be an explicit choice, then future
-    # `update-all` runs will keep it in sync.
+    # first as it needs to be an explicit choice.
     #
     # This intentionally searches the whole working directory so a single run
     # keeps the mixin in sync across every consumer in the repo (root modules,
