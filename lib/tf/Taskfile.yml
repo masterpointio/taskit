@@ -16,11 +16,18 @@ tasks:
     internal: true
     vars: &vars
       WORKSPACE:
-        sh: echo "{{.CLI_ARGS}}" | cut -d ' ' -f1 | xargs
+        sh: |
+          first=$(echo "{{.CLI_ARGS}}" | cut -d ' ' -f1 | xargs)
+          case "$first" in -*|"") echo "" ;; *) echo "$first" ;; esac
       TFVARS_PATH:
         sh: echo "{{.TFVARS_PATH | default "./tfvars"}}"
       TF_ARGS:
-        sh: echo "{{.CLI_ARGS}}" | cut -s -d ' ' -f2- | xargs
+        sh: |
+          first=$(echo "{{.CLI_ARGS}}" | cut -d ' ' -f1 | xargs)
+          case "$first" in
+            -*|"") echo "{{.CLI_ARGS}}" | xargs ;;
+            *)     echo "{{.CLI_ARGS}}" | cut -s -d ' ' -f2- | xargs ;;
+          esac
       TFVARS_FILE:
         sh: echo "{{.TFVARS_PATH}}/{{.WORKSPACE}}.tfvars"
       TF_CMD:
@@ -47,18 +54,20 @@ tasks:
       Generates a Terraform or OpenTofu execution plan for a specified environment, using a file to load the variables.
       The tool (Terraform or OpenTofu) is selected via the USE_TERRAFORM environment variable.
       The `terraform plan` or `tofu plan` arguments can be optionally passed in.
-      Requires a variables file specific to the environment to be present.
-      Usage: task tf:plan -- ENVIRONMENT [terraform/tofu plan arguments]
-      Example: task tf:plan -- automation
+      Requires a variables file specific to the environment to be present, unless using the default workspace.
+      Usage: task tf:plan -- [ENVIRONMENT] [terraform/tofu plan arguments]
+      Examples:
+        task tf:plan -- automation    # named workspace, uses tfvars/automation.tfvars
+        task tf:plan                  # default workspace, no -var-file (relies on *.auto.tfvars)
     dir: "{{.USER_WORKING_DIR}}"
     silent: true
     vars: *vars
     preconditions:
-      - sh: test -f {{.TFVARS_FILE}}
+      - sh: '[ -z "{{.WORKSPACE}}" ] || test -f {{.TFVARS_FILE}}'
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - "{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}"
-      - "{{.TF_CMD}} plan -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}"
+      - "{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}"
+      - "{{.TF_CMD}} plan {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}"
 
   apply:
     desc: Create or update infrastructure according to Terraform or OpenTofu configuration files in the current directory.
@@ -66,18 +75,20 @@ tasks:
       Applies a Terraform or OpenTofu execution plan for a specific environment, using a file to load the variables.
       The tool (Terraform or OpenTofu) is selected via the USE_TERRAFORM environment variable.
       The `terraform apply` or `tofu apply` arguments can be optionally passed in.
-      Requires a variables file specific to the environment to be present.
-      Usage: task tf:apply -- ENVIRONMENT [terraform/tofu apply arguments]
-      Example: task tf:apply -- automation
+      Requires a variables file specific to the environment to be present, unless using the default workspace.
+      Usage: task tf:apply -- [ENVIRONMENT] [terraform/tofu apply arguments]
+      Examples:
+        task tf:apply -- automation    # named workspace, uses tfvars/automation.tfvars
+        task tf:apply                  # default workspace, no -var-file (relies on *.auto.tfvars)
     dir: "{{.USER_WORKING_DIR}}"
     silent: true
     vars: *vars
     preconditions:
-      - sh: test -f {{.TFVARS_FILE}}
+      - sh: '[ -z "{{.WORKSPACE}}" ] || test -f {{.TFVARS_FILE}}'
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - "{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}"
-      - "{{.TF_CMD}} apply -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}"
+      - "{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}"
+      - "{{.TF_CMD}} apply {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}"
 
   refresh:
     desc: Refresh the Terraform or OpenTofu state to match the real-world infrastructure (safer via apply -refresh-only).
@@ -85,15 +96,17 @@ tasks:
       Refreshes the Terraform or OpenTofu state for a specified environment, using a file to load the variables.
       The tool (Terraform or OpenTofu) is selected via the USE_TERRAFORM environment variable.
       Note: Upstream deprecates `terraform refresh`; use `terraform apply -refresh-only` or `tofu apply -refresh-only` to review changes before writing state.
-      Requires a variables file specific to the environment to be present.
-      Usage: task tf:refresh -- ENVIRONMENT [terraform/tofu apply -refresh-only arguments]
-      Example: task tf:refresh -- automation
+      Requires a variables file specific to the environment to be present, unless using the default workspace.
+      Usage: task tf:refresh -- [ENVIRONMENT] [terraform/tofu apply -refresh-only arguments]
+      Examples:
+        task tf:refresh -- automation    # named workspace, uses tfvars/automation.tfvars
+        task tf:refresh                  # default workspace, no -var-file (relies on *.auto.tfvars)
     dir: "{{.USER_WORKING_DIR}}"
     silent: true
     vars: *vars
     preconditions:
-      - sh: test -f {{.TFVARS_FILE}}
+      - sh: '[ -z "{{.WORKSPACE}}" ] || test -f {{.TFVARS_FILE}}'
         msg: "Variables file does not exist: {{.TFVARS_FILE}}"
     cmds:
-      - "{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}"
-      - "{{.TF_CMD}} apply -refresh-only -var-file {{.TFVARS_FILE}} {{.TF_ARGS}}"
+      - "{{if .WORKSPACE}}{{.TF_CMD}} workspace select -or-create {{.WORKSPACE}}{{else}}true{{end}}"
+      - "{{.TF_CMD}} apply -refresh-only {{if .WORKSPACE}}-var-file {{.TFVARS_FILE}} {{end}}{{.TF_ARGS}}"
